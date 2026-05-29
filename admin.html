@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pick a Brick | Organiser</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="firebase-config.js"></script>
+</head>
+<body data-page="admin">
+  <main class="app admin-app">
+    <section class="admin-hero">
+      <div>
+        <p class="eyebrow">Organiser Console</p>
+        <h1>Pick a Brick Controls</h1>
+        <p class="intro">Control draws, exports, testing, and the board configuration from here.</p>
+      </div>
+      <a class="board-link" href="index.html" target="_blank" rel="noopener">Open board ↗</a>
+    </section>
+
+    <section class="admin-grid">
+      <article class="admin-card">
+        <h2>Mode</h2>
+        <label class="toggle-line">
+          <input id="offlineModeToggle" type="checkbox" />
+          Offline mode: use this browser only
+        </label>
+        <p id="modeStatus" class="small-note"></p>
+        <p class="small-note">Online mode uses Firebase for real-time sync across devices. Offline mode uses localStorage, so it only shares state with pages on this same browser.</p>
+      </article>
+
+      <article class="admin-card stats-card">
+        <h2>Status</h2>
+        <div class="stats-row"><strong id="adminRemaining">100</strong><span>Bricks remaining</span></div>
+        <div class="stats-row"><strong id="adminEntries">0</strong><span>Entries</span></div>
+        <div class="stats-row"><strong id="adminWinners">0</strong><span>Winners drawn</span></div>
+      </article>
+
+      <article class="admin-card controls-card">
+        <h2>Game Controls</h2>
+        <div class="controls admin-controls">
+          <button id="drawButton" class="primary" type="button">Draw winner</button>
+          <button id="closeBannerButton" class="secondary" type="button">Close winner banner</button>
+          <button id="exportButton" class="secondary" type="button">Export CSV</button>
+          <button id="resetButton" class="secondary danger" type="button">Reset board</button>
+        </div>
+      </article>
+
+      <article class="admin-card">
+        <h2>Configuration</h2>
+        <form id="brickCountForm" class="config-form admin-config-form">
+          <label for="brickCountInput">Total bricks on board
+            <input id="brickCountInput" name="brickCountInput" type="number" min="4" max="300" step="1" required />
+          </label>
+          <button id="applyBrickCount" class="secondary" type="submit">Apply and reset</button>
+        </form>
+        <label class="toggle-line">
+          <input id="testModeToggle" type="checkbox" />
+          Test mode: pre-fill email fields with generated test addresses
+        </label>
+      </article>
+
+      <article class="admin-card wide-card">
+        <h2>Last Winners</h2>
+        <ol id="winnerHistoryList" class="winner-history-list"></ol>
+      </article>
+    </section>
+  </main>
+
+  <script src="shared.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,153 +1,514 @@
-const TOTAL_BRICKS = 100;
-const STORAGE_KEY = "pick-a-brick-selections-v1";
-const COLOURS = ["red", "yellow", "blue", "green", "black", "white"];
-
-const board = document.getElementById("brickBoard");
-const remainingCount = document.getElementById("remainingCount");
-const resetButton = document.getElementById("resetButton");
-const exportButton = document.getElementById("exportButton");
-const drawButton = document.getElementById("drawButton");
-const winnerPanel = document.getElementById("winnerPanel");
-const dialog = document.getElementById("confirmDialog");
-const dialogText = document.getElementById("dialogText");
-const entrantName = document.getElementById("entrantName");
-const confirmPick = document.getElementById("confirmPick");
-
-let pendingNumber = null;
-let selections = loadSelections();
-
-function loadSelections() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {};
-  } catch {
-    return {};
-  }
+:root {
+  --red: #ee0000;
+  --dark-red: #b00000;
+  --ink: #151515;
+  --muted: #666;
+  --bg: #f7f7f7;
+  --card: #ffffff;
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+  --radius: 16px;
 }
 
-function saveSelections() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(selections));
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(238,0,0,0.11), transparent 34rem),
+    linear-gradient(135deg, #fff, var(--bg));
 }
 
-function renderBoard() {
-  board.innerHTML = "";
+button, input { font: inherit; }
 
-  for (let number = 1; number <= TOTAL_BRICKS; number++) {
-    const button = document.createElement("button");
-    const colour = COLOURS[(number - 1) % COLOURS.length];
-    const isPicked = Boolean(selections[number]);
-
-    button.type = "button";
-    button.className = `brick-button ${isPicked ? "picked" : ""}`;
-    button.disabled = isPicked;
-    button.ariaLabel = isPicked
-      ? `Number ${number} has already been selected`
-      : `Select brick number ${number}`;
-
-    button.innerHTML = `
-      <span class="brick-inner">
-        <span class="brick-face ${colour}">
-          <span class="brick-number">${number}</span>
-        </span>
-        <span class="brick-back ${colour}" aria-hidden="true"></span>
-      </span>
-    `;
-
-    button.addEventListener("click", () => openConfirm(number));
-    board.appendChild(button);
-  }
-
-  updateRemainingCount();
+.app {
+  position: relative;
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
 }
 
-function updateRemainingCount() {
-  const picked = Object.keys(selections).length;
-  remainingCount.textContent = TOTAL_BRICKS - picked;
+.fullscreen-icon {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255,255,255,.88);
+  border: 1px solid #ddd;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
 }
 
-function openConfirm(number) {
-  pendingNumber = number;
-  entrantName.value = "";
-  dialogText.textContent = `Confirm brick number ${number}. Once confirmed, it will flip over and cannot be selected again.`;
-  dialog.showModal();
-  entrantName.focus();
+.fullscreen-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-confirmPick.addEventListener("click", () => {
-  if (!pendingNumber || selections[pendingNumber]) return;
+.fullscreen-icon.is-fullscreen svg { transform: rotate(180deg); }
 
-  selections[pendingNumber] = {
-    number: pendingNumber,
-    entrant: entrantName.value.trim(),
-    selectedAt: new Date().toISOString()
-  };
-
-  saveSelections();
-  renderBoard();
-  pendingNumber = null;
-});
-
-resetButton.addEventListener("click", () => {
-  const confirmed = confirm("Reset all selected numbers? This clears the local board on this device.");
-  if (!confirmed) return;
-
-  selections = {};
-  saveSelections();
-  winnerPanel.classList.add("hidden");
-  renderBoard();
-});
-
-exportButton.addEventListener("click", () => {
-  const rows = [["Number", "Entrant", "Selected at"]];
-  Object.values(selections)
-    .sort((a, b) => a.number - b.number)
-    .forEach(selection => {
-      rows.push([
-        selection.number,
-        csvSafe(selection.entrant || ""),
-        selection.selectedAt
-      ]);
-    });
-
-  const csv = rows.map(row => row.join(",")).join("\n");
-  downloadFile(csv, `pick-a-brick-selections-${dateStamp()}.csv`, "text/csv");
-});
-
-drawButton.addEventListener("click", () => {
-  const selectedEntries = Object.values(selections);
-  if (selectedEntries.length === 0) {
-    winnerPanel.textContent = "No bricks have been selected yet.";
-    winnerPanel.classList.remove("hidden");
-    return;
-  }
-
-  const winner = selectedEntries[Math.floor(Math.random() * selectedEntries.length)];
-  const entrant = winner.entrant ? ` — ${winner.entrant}` : "";
-  winnerPanel.textContent = `Winner: brick ${winner.number}${entrant}`;
-  winnerPanel.classList.remove("hidden");
-});
-
-function csvSafe(value) {
-  const str = String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
+.hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 22px;
 }
 
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--red);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-function dateStamp() {
-  return new Date().toISOString().slice(0, 10);
+h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 7vw, 5.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
 }
 
-renderBoard();
+.intro {
+  max-width: 680px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+}
+
+.counter-stack {
+  display: grid;
+  gap: 10px;
+  min-width: 170px;
+}
+
+.counter {
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: white;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.counter-secondary {
+  background: white;
+  color: var(--ink);
+  border: 1px solid #ddd;
+}
+
+.counter span {
+  display: block;
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.counter small {
+  display: block;
+  margin-top: 6px;
+  color: #ddd;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.counter-secondary small { color: #666; }
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
+}
+
+button:hover { transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+
+.primary { background: var(--red); color: white; }
+.secondary { background: white; color: var(--ink); border: 1px solid #ddd; }
+.danger { border-color: #ffb3b3; }
+
+.winner-panel {
+  position: relative;
+  margin: 0 0 22px;
+  padding: 18px 54px 18px 20px;
+  border-radius: var(--radius);
+  background: #fff7d6;
+  border: 2px solid #ffd43b;
+  font-size: 1.2rem;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.winner-message { padding-right: 10px; }
+
+.winner-close {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255,255,255,.74);
+  color: #5a4300;
+  border: 1px solid rgba(0,0,0,.12);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.hidden { display: none; }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 14px;
+}
+
+.brick-button {
+  position: relative;
+  aspect-ratio: 346 / 175;
+  min-height: 54px;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  perspective: 900px;
+  filter: drop-shadow(0 8px 11px rgba(0,0,0,.22));
+}
+
+.brick-button[disabled] { cursor: not-allowed; opacity: .98; }
+.brick-button:hover:not([disabled]) { filter: drop-shadow(0 12px 16px rgba(0,0,0,.25)); }
+
+.brick-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+  transition: transform 520ms cubic-bezier(.2,.78,.15,1);
+}
+
+.brick-button.picked .brick-inner { transform: rotateY(180deg); }
+
+.brick-face,
+.brick-back {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backface-visibility: hidden;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.brick-back {
+  transform: rotateY(180deg);
+  background-image: url("assets/brick-grey.png");
+}
+
+.brick-orange .brick-face { background-image: url("assets/brick-orange.png"); }
+.brick-red .brick-face { background-image: url("assets/brick-red.png"); }
+.brick-yellow .brick-face { background-image: url("assets/brick-yellow.png"); }
+.brick-blue .brick-face { background-image: url("assets/brick-blue.png"); }
+.brick-green .brick-face { background-image: url("assets/brick-green.png"); }
+.brick-black .brick-face { background-image: url("assets/brick-black.png"); }
+.brick-white .brick-face { background-image: url("assets/brick-white.png"); }
+
+.brick-number {
+  position: relative;
+  z-index: 2;
+  font-size: clamp(1.25rem, 2.7vw, 2rem);
+  font-weight: 950;
+  color: white;
+  text-shadow: 0 2px 5px rgba(0,0,0,.70), 0 0 1px rgba(0,0,0,.95);
+  line-height: 1;
+  transform: translateY(2px);
+}
+
+.brick-yellow .brick-number,
+.brick-white .brick-number { color: #222; text-shadow: 0 1px 2px rgba(255,255,255,.85); }
+
+.organiser-panel {
+  margin: 24px 0 0;
+  color: var(--muted);
+}
+
+.organiser-panel summary {
+  width: fit-content;
+  margin: 10px auto 0;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: .88rem;
+  font-weight: 700;
+  color: #777;
+  border-radius: 999px;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.organiser-panel summary::-webkit-details-marker { display: none; }
+.organiser-panel summary:hover { background: rgba(0,0,0,.04); }
+.gear-icon { font-size: 1.15rem; line-height: 1; }
+.summary-text { font-size: .76rem; opacity: .45; }
+.organiser-panel:not([open]) .summary-text { width: 0; overflow: hidden; white-space: nowrap; }
+.organiser-panel[open] .summary-text { opacity: .85; }
+
+.organiser-content {
+  margin: 12px auto 0;
+  padding: 16px;
+  max-width: 860px;
+  border: 1px solid #e4e4e4;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.controls,
+.config-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: end;
+}
+
+.config-form {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #ececec;
+}
+
+.kiosk-note {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: .95rem;
+}
+
+.winner-history {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #ececec;
+}
+
+.winner-history h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--ink);
+}
+
+.winner-history ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 24px;
+  max-height: 170px;
+  overflow: auto;
+}
+
+.winner-history li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8f8f8;
+}
+
+.winner-history li strong,
+.winner-history li span { display: block; }
+.winner-history li span { margin-top: 2px; font-size: .9rem; color: #555; }
+.empty-history { list-style: none; text-align: center; color: #777; }
+
+#confirmDialog {
+  border: 0;
+  border-radius: 22px;
+  padding: 0;
+  width: min(440px, calc(100% - 32px));
+  box-shadow: 0 30px 80px rgba(0,0,0,.3);
+}
+
+#confirmDialog::backdrop { background: rgba(0,0,0,.55); }
+.dialog-card { padding: 24px; }
+.dialog-card h2 { margin: 0 0 8px; }
+.dialog-card p { color: var(--muted); }
+
+label {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  font-weight: 800;
+}
+
+.config-form label {
+  margin: 0;
+  min-width: 190px;
+  text-align: left;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+input.invalid { border-color: var(--red); outline-color: var(--red); }
+.error-message { min-height: 1.2em; color: var(--red) !important; font-weight: 700; }
+
+menu {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 850px) {
+  .hero { grid-template-columns: 1fr; }
+  .counter-stack { width: 100%; }
+  .board { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  .app { width: min(100% - 20px, 1280px); padding-top: 20px; }
+  .board { grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 8px; }
+  .brick-number { font-size: 1.1rem; }
+}
+
+.winner-close:hover { transform: translateY(-50%) scale(1.03); }
+.winner-close:active { transform: translateY(-50%) scale(.98); }
+
+/* Firebase/admin split additions */
+.notice {
+  margin: 0 0 22px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  background: #eef5ff;
+  border: 1px solid #b6d4fe;
+  color: #183b63;
+  font-weight: 750;
+}
+
+.admin-app { max-width: 1180px; }
+.admin-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+.admin-hero h1 { font-size: clamp(2.2rem, 5vw, 4.8rem); }
+.board-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.admin-card {
+  padding: 20px;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.92);
+  border: 1px solid #e1e1e1;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+.admin-card h2 {
+  margin: 0 0 14px;
+  font-size: 1.25rem;
+}
+.wide-card { grid-column: 1 / -1; }
+.toggle-line {
+  display: flex;
+  grid-template-columns: none;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+  font-weight: 800;
+}
+.toggle-line input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--red);
+}
+.small-note {
+  color: var(--muted);
+  margin: 10px 0 0;
+  line-height: 1.45;
+}
+.stats-card {
+  display: grid;
+  gap: 12px;
+}
+.stats-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f7f7f7;
+}
+.stats-row strong {
+  min-width: 70px;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.stats-row span { color: var(--muted); font-weight: 800; }
+.admin-controls { justify-content: flex-start; }
+.admin-config-form {
+  justify-content: flex-start;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.winner-history-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 24px;
+  max-height: 260px;
+  overflow: auto;
+}
+.winner-history-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8f8f8;
+}
+.winner-history-list li strong,
+.winner-history-list li span { display: block; }
+.winner-history-list li span { margin-top: 3px; color: #555; }
+
+body[data-page="board"] .organiser-panel { display: none !important; }
+
+@media (max-width: 760px) {
+  .admin-hero { display: block; }
+  .board-link { margin-top: 16px; }
+  .admin-grid { grid-template-columns: 1fr; }
+}

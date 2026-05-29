@@ -1,31 +1,59 @@
-# Pick a Brick Prize Draw
+# Pick a Brick Prize Draw, Firebase Edition
 
-A static web app for a conference stand prize draw. Attendees pick a number from 1 to 100. Once selected, the brick flips upside down and cannot be picked again on that device/browser.
+A static GitHub Pages web app with:
+
+- `index.html` for the participant board
+- `admin.html` for organiser controls
+- Firebase Firestore online mode for multi-device real-time sync
+- Offline mode using localStorage for poor connectivity
+- Test mode that pre-fills email fields with generated test email addresses
+- CSV export, winner history, configurable board size, reset, and closable winner banner
+
+## Important offline caveat
+
+Offline mode stores everything in the browser's localStorage. It is useful when the event Wi-Fi is unreliable, but it does **not** sync across different devices. Use the same device/browser for board and admin if you switch offline.
+
+## Firebase setup
+
+1. Create a Firebase project.
+2. Create a Firestore database.
+3. Register a Web App in Firebase Project Settings.
+4. Copy the Firebase config into `firebase-config.js`.
+5. Deploy these files to GitHub Pages.
+6. Open `admin.html` first and use Reset Board to initialise the game.
+7. Open `index.html` on the participant display.
+
+## Suggested Firestore rules for a prototype
+
+For a closed event prototype, you can start permissive and then tighten later:
+
+```txt
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /games/{gameId} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+This is intentionally not strong security. For a production draw, add authentication or a server-side admin endpoint.
 
 ## Files
 
-- `index.html` - app structure
-- `styles.css` - layout and brick styling
-- `app.js` - board logic, local storage, export and draw buttons
+- `index.html`: participant board only
+- `admin.html`: organiser controls
+- `shared.js`: state, Firebase/localStorage storage layer, helpers
+- `board.js`: participant board logic
+- `admin.js`: organiser controls
+- `firebase-config.js`: paste your Firebase project config here
+- `assets/`: brick images
 
-## Run locally
+## Quick test without Firebase
 
-Open `index.html` in a browser.
-
-## Deploy to GitHub Pages
-
-1. Create a new GitHub repository, for example `pick-a-brick`.
-2. Upload these three files to the repository root.
-3. Go to **Settings → Pages**.
-4. Under **Build and deployment**, choose:
-   - Source: `Deploy from a branch`
-   - Branch: `main`
-   - Folder: `/root`
-5. Save.
-6. GitHub will publish the site at your Pages URL.
-
-## Important note
-
-This app stores selected numbers in the browser's `localStorage`. That means it is perfect for one tablet, one laptop, or one shared screen at the stand. If several devices open the page, each device will have its own independent board.
-
-For a multi-device shared board, you would need a small backend/database such as Firebase, Supabase, or a hosted form/database service.
+1. Open `admin.html`.
+2. Turn on Offline mode.
+3. Turn on Test mode.
+4. Open `index.html` in the same browser.
+5. Click bricks. Email fields will be pre-filled with generated test addresses.
