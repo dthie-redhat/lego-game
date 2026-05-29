@@ -48,9 +48,7 @@ function renderBoard() {
         <span class="brick-face ${colour}">
           <span class="brick-number">${number}</span>
         </span>
-        <span class="brick-back">
-          <span class="brick-number">${number}</span>
-        </span>
+        <span class="brick-back ${colour}" aria-hidden="true"></span>
       </span>
     `;
 
