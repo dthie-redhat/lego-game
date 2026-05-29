@@ -57,3 +57,8 @@ Enable test mode in `admin.html` to auto-generate short fake email addresses suc
 - The public winner banner now shows the winning brick number and matching email address.
 - The public board no longer references the admin page.
 - The header uses the supplied Red Hat and NTT logo image assets from `assets/`.
+
+## Fix notes
+- Logo display is constrained with CSS (`max-height`) so the supplied logo images do not dominate the banner.
+- The public winner splash displays both the winning brick number and the winner email.
+- The public page no longer mentions `admin.html`.

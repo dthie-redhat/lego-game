@@ -23,7 +23,7 @@ subscribeState((nextState, error) => {
 
 function showModeNotice() {
   if (getMode() === "offline") showNotice("Offline mode is active on this browser. Cross-device updates are disabled.");
-  else if (!hasFirebaseConfig()) showNotice("Firebase is not configured yet. Complete firebase-config.js or switch to offline mode in admin.html.");
+  else if (!hasFirebaseConfig()) showNotice("Firebase is not configured on this device. Please ask an organiser to configure the app or use offline mode.");
   else hideNotice();
 }
 function showNotice(msg) { connectionNotice.textContent = msg; connectionNotice.classList.remove("hidden"); }
@@ -46,9 +46,14 @@ function renderBoard() {
   remainingCount.textContent = String(state.totalBricks - picked);
   winnersDrawnCount.textContent = String(state.winnerHistory.length);
 }
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch]));
+}
 function renderBanner() {
   if (!state.lastWinner) { winnerPanel.classList.add("hidden"); winnerPanel.innerHTML = ""; return; }
-  winnerPanel.innerHTML = `<button class="close-banner" type="button" aria-label="Close winner banner">×</button><span class="winner-title">🏆 Winner: Brick ${state.lastWinner.number}</span><small>${state.lastWinner.email || "Email not recorded"}</small>`;
+  const number = Number(state.lastWinner.number);
+  const email = state.lastWinner.email || state.selections?.[number]?.email || "Email not recorded";
+  winnerPanel.innerHTML = `<button class="close-banner" type="button" aria-label="Close winner banner">×</button><span class="winner-title">🏆 Winner: Brick ${escapeHtml(number)}</span><small class="winner-email">${escapeHtml(email)}</small>`;
   winnerPanel.classList.remove("hidden");
   winnerPanel.querySelector("button").addEventListener("click", async () => { try { await clearLastWinnerBanner(); } catch { winnerPanel.classList.add("hidden"); } });
 }
