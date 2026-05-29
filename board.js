@@ -69,8 +69,9 @@ function openEntryDialog(number) {
 cancelPick.addEventListener("click", () => dialog.close());
 entryForm.addEventListener("submit", async ev => {
   ev.preventDefault();
-  const email = entrantEmail.value.trim();
+  const email = entrantEmail.value.trim().toLowerCase();
   if (!EMAIL_REGEX.test(email)) { emailError.textContent = "Please enter a valid email address."; return; }
+  if (isEmailAlreadyUsed(state, email)) { emailError.textContent = "This email address has already been used for today's draw."; return; }
   try { await claimBrick(pendingNumber, email); dialog.close(); }
   catch (err) { emailError.textContent = err.message; }
 });

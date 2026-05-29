@@ -13,6 +13,7 @@ function defaultState(total = DEFAULT_TOTAL) {
     winnerHistory: [],
     lastWinner: null,
     testMode: false,
+    usedEmails: {},
     updatedAt: new Date().toISOString()
   };
 }
@@ -23,7 +24,31 @@ function normaliseState(raw) {
   state.selections = state.selections || {};
   state.winnerHistory = Array.isArray(state.winnerHistory) ? state.winnerHistory : [];
   state.testMode = Boolean(state.testMode);
+  state.usedEmails = state.usedEmails && typeof state.usedEmails === "object" ? state.usedEmails : {};
+
+  // Back-fill usedEmails from existing entries. This makes the uniqueness guard
+  // work even if a previous app version wrote entries without the usedEmails map.
+  Object.values(state.selections || {}).forEach(entry => {
+    const email = normaliseEmail(entry?.email);
+    if (email) state.usedEmails[emailKey(email)] = email;
+  });
+
   return state;
+}
+function normaliseEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+function emailKey(email) {
+  // Firestore-safe key. Email addresses contain dots, which are awkward in field paths.
+  // This keeps the original email as the value while using a simple encoded key.
+  return btoa(unescape(encodeURIComponent(normaliseEmail(email)))).replace(/=+$/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+function isEmailAlreadyUsed(state, email) {
+  const normalised = normaliseEmail(email);
+  if (!normalised) return false;
+  const key = emailKey(normalised);
+  if (state.usedEmails && state.usedEmails[key]) return true;
+  return Object.values(state.selections || {}).some(entry => normaliseEmail(entry?.email) === normalised);
 }
 function getMode() { return localStorage.getItem(MODE_KEY) || "firebase"; }
 function setMode(mode) { localStorage.setItem(MODE_KEY, mode === "offline" ? "offline" : "firebase"); }
@@ -117,20 +142,21 @@ async function subscribeState(callback) {
 }
 async function claimBrick(number, email) {
   number = Number(number);
-  email = String(email || "").trim().toLowerCase();
+  email = normaliseEmail(email);
   if (!EMAIL_REGEX.test(email)) throw new Error("Please enter a valid email address.");
+
   return updateState(state => {
+    state.usedEmails = state.usedEmails || {};
+
     if (number < 1 || number > state.totalBricks) throw new Error("That number is outside the current board.");
     if (state.selections[number]) throw new Error("That brick has already been selected.");
 
-    const emailAlreadyUsed = Object.values(state.selections || {}).some(entry =>
-      String(entry?.email || "").trim().toLowerCase() === email
-    );
-    if (emailAlreadyUsed) {
+    if (isEmailAlreadyUsed(state, email)) {
       throw new Error("This email address has already been used for today's draw.");
     }
 
     state.selections[number] = { email, number, timestamp: new Date().toISOString(), drawn: false, drawOrder: "" };
+    state.usedEmails[emailKey(email)] = email;
     return state;
   });
 }

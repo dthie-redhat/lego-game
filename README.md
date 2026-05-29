@@ -67,3 +67,8 @@ Enable test mode in `admin.html` to auto-generate short fake email addresses suc
 ## Entry uniqueness
 
 The board now checks submitted email addresses against the current game state before accepting a brick. Email comparison is case-insensitive and trimmed. Resetting the board clears all entries, winners, and the used-email list so the same person can enter again on a second event day.
+
+
+## Email uniqueness guard
+
+Email addresses are normalised to lowercase and checked before a brick is claimed. The app also stores a `usedEmails` map in state so duplicate checks are fast and robust across both Firebase and offline modes. Resetting the board clears `selections`, `winnerHistory`, `lastWinner`, and `usedEmails`, allowing the same person to enter again on a later event day.
