@@ -1,33 +1,35 @@
-# Pick a Brick Prize Draw, Firebase Edition
+# Pick a Brick Prize Draw
 
-A static GitHub Pages web app with:
+Static GitHub Pages app with Firebase Firestore sync and offline localStorage fallback.
 
-- `index.html` for the participant board
-- `admin.html` for organiser controls
-- Firebase Firestore online mode for multi-device real-time sync
-- Offline mode using localStorage for poor connectivity
-- Test mode that pre-fills email fields with generated test email addresses
-- CSV export, winner history, configurable board size, reset, and closable winner banner
+## Files
 
-## Important offline caveat
+- `index.html` - participant board
+- `admin.html` - organiser console
+- `styles.css` - all styling
+- `shared.js` - shared game/Firebase/offline logic
+- `board.js` - board page logic
+- `admin.js` - admin controls
+- `firebase-config.js` - paste your Firebase web app config here
+- `assets/` - brick images generated from the supplied sample brick
 
-Offline mode stores everything in the browser's localStorage. It is useful when the event Wi-Fi is unreliable, but it does **not** sync across different devices. Use the same device/browser for board and admin if you switch offline.
+## GitHub Pages deployment
+
+Upload the contents of this folder directly to the repository root or to the folder you publish from GitHub Pages.
+
+Important: `index.html`, `styles.css`, `shared.js`, `board.js`, `admin.html`, and the `assets` folder must sit together at the same level. Do not upload only the HTML files.
 
 ## Firebase setup
 
 1. Create a Firebase project.
-2. Create a Firestore database.
-3. Register a Web App in Firebase Project Settings.
-4. Copy the Firebase config into `firebase-config.js`.
-5. Deploy these files to GitHub Pages.
-6. Open `admin.html` first and use Reset Board to initialise the game.
-7. Open `index.html` on the participant display.
+2. Add a Web App.
+3. Enable Firestore Database.
+4. Paste the Firebase web config into `firebase-config.js`.
+5. In Firestore rules, for a short prototype you can start with open test rules, then tighten them before a real event.
 
-## Suggested Firestore rules for a prototype
+Prototype-only rules example:
 
-For a closed event prototype, you can start permissive and then tighten later:
-
-```txt
+```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -38,22 +40,14 @@ service cloud.firestore {
 }
 ```
 
-This is intentionally not strong security. For a production draw, add authentication or a server-side admin endpoint.
+For a public event, use a simple admin token or authentication before exposing admin actions.
 
-## Files
+## Offline mode
 
-- `index.html`: participant board only
-- `admin.html`: organiser controls
-- `shared.js`: state, Firebase/localStorage storage layer, helpers
-- `board.js`: participant board logic
-- `admin.js`: organiser controls
-- `firebase-config.js`: paste your Firebase project config here
-- `assets/`: brick images
+Offline mode is selected from `admin.html`.
 
-## Quick test without Firebase
+Caveat: offline mode uses `localStorage`, so it only shares state within the same browser/device. It is useful for poor connectivity, but it cannot sync a separate admin device with a separate display device.
 
-1. Open `admin.html`.
-2. Turn on Offline mode.
-3. Turn on Test mode.
-4. Open `index.html` in the same browser.
-5. Click bricks. Email fields will be pre-filled with generated test addresses.
+## Test mode
+
+Enable test mode in `admin.html` to auto-generate short fake email addresses such as `novahawk42@test.local` when clicking bricks.

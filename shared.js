@@ -1,244 +1,160 @@
-const DEFAULT_TOTAL_BRICKS = 100;
-const MIN_BRICKS = 4;
-const MAX_BRICKS = 300;
-const STATE_KEY = "pick-a-brick-state-v9";
-const MODE_KEY = "pick-a-brick-mode-v1";
-const COLOURS = ["orange", "red", "yellow", "blue", "green", "black", "white"];
+const STORAGE_KEY = "pickABrickState.v3";
+const MODE_KEY = "pickABrickMode.v3";
+const COLOURS = ["orange", "red", "blue", "green", "yellow", "black", "white"];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const channel = "BroadcastChannel" in window ? new BroadcastChannel("pick-a-brick") : null;
+const DEFAULT_TOTAL = 100;
+const adjectives = ["swift", "blue", "red", "bright", "smart", "rapid", "pixel", "nova", "cloud", "solar", "brisk", "neon"];
+const nouns = ["fox", "bear", "otter", "hawk", "eagle", "tiger", "wolf", "lynx", "falcon", "raven", "badger", "panda"];
 
-let firestoreSdk = null;
-let firestoreDb = null;
-let firestoreDocRef = null;
-
-function getMode() {
-  return localStorage.getItem(MODE_KEY) || "online";
-}
-
-function setMode(mode) {
-  localStorage.setItem(MODE_KEY, mode === "offline" ? "offline" : "online");
-  notifyLocal();
-}
-
-function hasFirebaseConfig() {
-  const cfg = window.PICK_A_BRICK_FIREBASE_CONFIG || {};
-  return Boolean(cfg.apiKey && cfg.projectId && !String(cfg.apiKey).includes("PASTE_"));
-}
-
-async function initFirebase() {
-  if (firestoreDb && firestoreDocRef) return { db: firestoreDb, docRef: firestoreDocRef, sdk: firestoreSdk };
-  if (!hasFirebaseConfig()) throw new Error("Firebase config is missing. Update firebase-config.js first.");
-
-  const [{ initializeApp }, sdk] = await Promise.all([
-    import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
-    import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js")
-  ]);
-
-  const app = initializeApp(window.PICK_A_BRICK_FIREBASE_CONFIG);
-  firestoreDb = sdk.getFirestore(app);
-  firestoreDocRef = sdk.doc(firestoreDb, "games", window.PICK_A_BRICK_GAME_ID || "default");
-  firestoreSdk = sdk;
-  return { db: firestoreDb, docRef: firestoreDocRef, sdk };
-}
-
-function defaultState() {
+function defaultState(total = DEFAULT_TOTAL) {
   return {
-    totalBricks: DEFAULT_TOTAL_BRICKS,
+    totalBricks: Number(total) || DEFAULT_TOTAL,
     selections: {},
     winnerHistory: [],
-    currentBanner: null,
-    settings: { testMode: false },
+    lastWinner: null,
+    testMode: false,
     updatedAt: new Date().toISOString()
   };
 }
-
-function normaliseState(value) {
-  const base = defaultState();
-  const raw = value && typeof value === "object" ? value : {};
-  const totalBricks = clampBrickCount(Number(raw.totalBricks || DEFAULT_TOTAL_BRICKS));
-  const selections = raw.selections && typeof raw.selections === "object" ? { ...raw.selections } : {};
-  const winnerHistory = Array.isArray(raw.winnerHistory) ? raw.winnerHistory : [];
-  const settings = { ...base.settings, ...(raw.settings || {}) };
-
-  Object.keys(selections).forEach(key => {
-    const number = Number(key);
-    if (!Number.isInteger(number) || number < 1 || number > totalBricks) delete selections[key];
-  });
-
-  return {
-    ...base,
-    ...raw,
-    totalBricks,
-    selections,
-    winnerHistory,
-    currentBanner: raw.currentBanner || null,
-    settings,
-    updatedAt: raw.updatedAt || base.updatedAt
-  };
-}
-
-function getLocalState() {
-  try {
-    const saved = localStorage.getItem(STATE_KEY);
-    if (saved) return normaliseState(JSON.parse(saved));
-  } catch {}
-  return defaultState();
-}
-
-function setLocalState(nextState) {
-  const state = normaliseState({ ...nextState, updatedAt: new Date().toISOString() });
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
-  notifyLocal();
+function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+function normaliseState(raw) {
+  const state = Object.assign(defaultState(), raw || {});
+  state.totalBricks = Number(state.totalBricks) || DEFAULT_TOTAL;
+  state.selections = state.selections || {};
+  state.winnerHistory = Array.isArray(state.winnerHistory) ? state.winnerHistory : [];
+  state.testMode = Boolean(state.testMode);
   return state;
 }
-
-function notifyLocal() {
-  if (channel) channel.postMessage({ type: "state" });
-  window.dispatchEvent(new CustomEvent("pickabrick-local-change"));
+function getMode() { return localStorage.getItem(MODE_KEY) || "firebase"; }
+function setMode(mode) { localStorage.setItem(MODE_KEY, mode === "offline" ? "offline" : "firebase"); }
+function loadLocalState() { return normaliseState(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
+function saveLocalState(state) {
+  const next = normaliseState(state);
+  next.updatedAt = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent("pickABrickLocalChange", { detail: next }));
+  return next;
 }
-
-function subscribeLocal(callback) {
-  const emit = () => callback(getLocalState(), null);
-  const onStorage = event => {
-    if ([STATE_KEY, MODE_KEY].includes(event.key)) emit();
-  };
-  const onCustom = () => emit();
-  window.addEventListener("storage", onStorage);
-  window.addEventListener("pickabrick-local-change", onCustom);
-  if (channel) channel.addEventListener("message", onCustom);
-  emit();
-  return () => {
-    window.removeEventListener("storage", onStorage);
-    window.removeEventListener("pickabrick-local-change", onCustom);
-    if (channel) channel.removeEventListener("message", onCustom);
-  };
+function randomTestEmail() {
+  const a = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const n = nouns[Math.floor(Math.random() * nouns.length)];
+  const x = Math.floor(10 + Math.random() * 90);
+  return `${a}${n}${x}@test.local`;
 }
-
-async function loadRemoteState() {
-  const { docRef, sdk } = await initFirebase();
-  const snap = await sdk.getDoc(docRef);
+function hasFirebaseConfig() {
+  const cfg = window.FIREBASE_CONFIG || {};
+  return cfg.apiKey && !String(cfg.apiKey).includes("PASTE_") && cfg.projectId && !String(cfg.projectId).includes("PASTE_");
+}
+function gameDocPath() { return `games/${window.GAME_ID || "ntt-redhat-lego-game"}`; }
+let firebaseParts = null;
+async function getFirebase() {
+  if (firebaseParts) return firebaseParts;
+  if (!hasFirebaseConfig()) throw new Error("Firebase config has not been completed in firebase-config.js");
+  const appMod = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js");
+  const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+  const app = appMod.initializeApp(window.FIREBASE_CONFIG);
+  const db = fsMod.getFirestore(app);
+  firebaseParts = { db, ...fsMod };
+  return firebaseParts;
+}
+async function getState() {
+  if (getMode() === "offline") return loadLocalState();
+  const f = await getFirebase();
+  const ref = f.doc(f.db, gameDocPath());
+  const snap = await f.getDoc(ref);
   if (!snap.exists()) {
-    const initial = defaultState();
-    await sdk.setDoc(docRef, initial);
-    return initial;
+    const state = defaultState();
+    await f.setDoc(ref, state);
+    return state;
   }
   return normaliseState(snap.data());
 }
-
-async function setRemoteState(nextState) {
-  const { docRef, sdk } = await initFirebase();
-  const state = normaliseState({ ...nextState, updatedAt: new Date().toISOString() });
-  await sdk.setDoc(docRef, state);
-  return state;
+async function setState(state) {
+  const next = normaliseState(state);
+  next.updatedAt = new Date().toISOString();
+  if (getMode() === "offline") return saveLocalState(next);
+  const f = await getFirebase();
+  await f.setDoc(f.doc(f.db, gameDocPath()), next);
+  return next;
 }
-
-async function subscribeRemote(callback) {
-  const { docRef, sdk } = await initFirebase();
-  const existing = await sdk.getDoc(docRef);
-  if (!existing.exists()) await sdk.setDoc(docRef, defaultState());
-  return sdk.onSnapshot(docRef, snap => callback(normaliseState(snap.data()), null), error => callback(null, error));
-}
-
-async function getState() {
-  if (getMode() === "offline") return getLocalState();
-  try { return await loadRemoteState(); }
-  catch (error) { throw error; }
-}
-
-async function saveState(nextState) {
-  if (getMode() === "offline") return setLocalState(nextState);
-  return setRemoteState(nextState);
-}
-
-async function mutateState(mutator) {
+async function updateState(mutator) {
   if (getMode() === "offline") {
-    const current = getLocalState();
-    const result = mutator(current);
-    const nextState = result && result.state ? result.state : current;
-    return { state: setLocalState(nextState), result: result && result.result };
+    const state = loadLocalState();
+    const next = normaliseState(mutator(clone(state)) || state);
+    return saveLocalState(next);
   }
-
-  const { db, docRef, sdk } = await initFirebase();
-  let transactionResult;
-  await sdk.runTransaction(db, async transaction => {
-    const snap = await transaction.get(docRef);
-    const current = normaliseState(snap.exists() ? snap.data() : defaultState());
-    const result = mutator(current);
-    const nextState = normaliseState(result && result.state ? result.state : current);
-    transaction.set(docRef, nextState);
-    transactionResult = result && result.result;
+  const f = await getFirebase();
+  const ref = f.doc(f.db, gameDocPath());
+  let finalState;
+  await f.runTransaction(f.db, async tx => {
+    const snap = await tx.get(ref);
+    const state = snap.exists() ? normaliseState(snap.data()) : defaultState();
+    finalState = normaliseState(mutator(clone(state)) || state);
+    finalState.updatedAt = new Date().toISOString();
+    tx.set(ref, finalState);
   });
-  return { state: await loadRemoteState(), result: transactionResult };
+  return finalState;
 }
-
 async function subscribeState(callback) {
-  if (getMode() === "offline") return subscribeLocal(callback);
-  try { return await subscribeRemote(callback); }
-  catch (error) {
-    callback(null, error);
+  if (getMode() === "offline") {
+    callback(loadLocalState());
+    const handler = ev => callback(normaliseState(ev.detail || loadLocalState()));
+    window.addEventListener("storage", handler);
+    window.addEventListener("pickABrickLocalChange", handler);
+    return () => { window.removeEventListener("storage", handler); window.removeEventListener("pickABrickLocalChange", handler); };
+  }
+  try {
+    const f = await getFirebase();
+    const ref = f.doc(f.db, gameDocPath());
+    const snap = await f.getDoc(ref);
+    if (!snap.exists()) await f.setDoc(ref, defaultState());
+    return f.onSnapshot(ref, s => callback(normaliseState(s.data())), err => callback(null, err));
+  } catch (err) {
+    callback(null, err);
     return () => {};
   }
 }
-
-function resetGame(totalBricks) {
-  return saveState({ ...defaultState(), totalBricks: clampBrickCount(totalBricks) });
+async function claimBrick(number, email) {
+  number = Number(number);
+  email = String(email || "").trim().toLowerCase();
+  if (!EMAIL_REGEX.test(email)) throw new Error("Please enter a valid email address.");
+  return updateState(state => {
+    if (number < 1 || number > state.totalBricks) throw new Error("That number is outside the current board.");
+    if (state.selections[number]) throw new Error("That brick has already been selected.");
+    state.selections[number] = { email, number, timestamp: new Date().toISOString(), drawn: false, drawOrder: "" };
+    return state;
+  });
 }
-
-function clampBrickCount(value) {
-  if (!Number.isFinite(value)) return DEFAULT_TOTAL_BRICKS;
-  return Math.max(MIN_BRICKS, Math.min(MAX_BRICKS, Math.round(value)));
+async function drawWinner() {
+  return updateState(state => {
+    const available = Object.keys(state.selections).map(Number).filter(n => !state.selections[n].drawn);
+    if (!available.length) throw new Error("There are no undrawn entries available.");
+    const number = available[Math.floor(Math.random() * available.length)];
+    const entry = state.selections[number];
+    const winner = { number, email: entry.email, timestamp: new Date().toISOString(), drawOrder: state.winnerHistory.length + 1 };
+    entry.drawn = true;
+    entry.drawOrder = winner.drawOrder;
+    state.lastWinner = winner;
+    state.winnerHistory.push(winner);
+    return state;
+  });
 }
-
-function validateEmail(email) { return EMAIL_REGEX.test(email); }
-
-function randomTestEmail() {
-  const adjectives = ["red", "blue", "swift", "cloud", "nova", "pixel", "bright", "rapid", "solar", "quiet"];
-  const nouns = ["fox", "otter", "hawk", "raven", "lynx", "panda", "falcon", "tiger", "badger", "koala"];
-  const a = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const n = nouns[Math.floor(Math.random() * nouns.length)];
-  const suffix = Math.floor(10 + Math.random() * 90);
-  return `${a}${n}${suffix}@test.local`;
+async function clearLastWinnerBanner() {
+  return updateState(state => { state.lastWinner = null; return state; });
 }
-
-function csvSafe(value) {
-  const str = String(value ?? "");
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
-  return str;
+async function resetGame(total) { return setState(defaultState(Number(total) || DEFAULT_TOTAL)); }
+async function setTestMode(enabled) { return updateState(state => { state.testMode = Boolean(enabled); return state; }); }
+function entriesToCsv(state) {
+  const rows = [["Number","Email","Selected At","Drawn","Draw Order"]];
+  for (let i=1;i<=state.totalBricks;i++) {
+    const e = state.selections[i];
+    if (e) rows.push([i, e.email || "", e.timestamp || "", e.drawn ? "yes" : "no", e.drawOrder || ""]);
+  }
+  return rows.map(r => r.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
 }
-
-function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>'"]/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
-  }[char]));
-}
-
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-function dateStamp() { return new Date().toISOString().slice(0, 10); }
-
-function buildCsv(state) {
-  const rows = [["Number", "Email", "Selected at", "Drawn at", "Draw order"]];
-  Object.values(state.selections)
-    .sort((a, b) => Number(a.number) - Number(b.number))
-    .forEach(selection => {
-      const drawIndex = state.winnerHistory.findIndex(w => Number(w.number) === Number(selection.number));
-      rows.push([
-        selection.number,
-        selection.email || "",
-        selection.selectedAt || "",
-        selection.drawnAt || "",
-        drawIndex >= 0 ? drawIndex + 1 : ""
-      ]);
-    });
-  return rows.map(row => row.map(csvSafe).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }

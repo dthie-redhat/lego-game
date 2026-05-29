@@ -4,48 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pick a Brick | Prize Draw</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="firebase-config.js"></script>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./firebase-config.js"></script>
 </head>
-<body data-page="board">
+<body>
   <main class="app">
-    <button id="fullscreenButton" class="fullscreen-icon" type="button" aria-label="Enter fullscreen" title="Fullscreen">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10V5h5M14 5h5v5M19 14v5h-5M10 19H5v-5" /></svg>
-    </button>
-
-    <section class="hero">
-      <div>
-        <p class="eyebrow">Red Hat × NTT Partner Event</p>
-        <h1>Pick a Brick. Pick a Number.</h1>
-        <p class="intro">Choose one available brick for your chance to win one of four LEGO® prizes.</p>
-      </div>
-      <div class="counter-stack" aria-live="polite">
-        <div class="counter"><span id="remainingCount">100</span><small>numbers left</small></div>
-        <div class="counter counter-secondary"><span id="winnersDrawnCount">0</span><small>winners drawn</small></div>
-      </div>
-    </section>
-
+    <div class="topbar"><div class="brand"><span class="hat"></span><span>Red Hat × NTT</span></div><button id="fullscreenButton" class="fullscreen-icon" type="button" aria-label="Enter fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24"><path d="M5 10V5h5M14 5h5v5M19 14v5h-5M10 19H5v-5" /></svg></button></div>
+    <section class="hero"><div><p class="eyebrow">Partner Event Prize Draw</p><h1>Pick a Brick. Pick a Number.</h1><p class="intro">Choose one available brick for your chance to win one of four LEGO® prizes.</p></div><div class="counter-stack"><div class="counter"><span id="remainingCount">100</span><small>numbers left</small></div><div class="counter counter-secondary"><span id="winnersDrawnCount">0</span><small>winners drawn</small></div></div></section>
     <section id="connectionNotice" class="notice hidden" aria-live="polite"></section>
     <section id="winnerPanel" class="winner-panel hidden" aria-live="polite"></section>
     <section class="board" id="brickBoard" aria-label="Pick a brick number"></section>
-
-    <dialog id="confirmDialog">
-      <form id="entryForm" class="dialog-card" novalidate>
-        <h2 id="dialogTitle">Enter your email</h2>
-        <p id="dialogText"></p>
-        <label for="entrantEmail">Email address
-          <input id="entrantEmail" name="entrantEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" />
-        </label>
-        <p id="emailError" class="error-message" aria-live="polite"></p>
-        <menu>
-          <button id="cancelPick" type="button" class="secondary">Cancel</button>
-          <button id="confirmPick" type="submit" class="primary">Confirm pick</button>
-        </menu>
-      </form>
-    </dialog>
+    <dialog id="confirmDialog"><form id="entryForm" class="dialog-card" novalidate><h2>Enter your email</h2><p id="dialogText"></p><label>Email address<input id="entrantEmail" name="entrantEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /></label><p id="emailError" class="error-message" aria-live="polite"></p><menu><button id="cancelPick" type="button" class="secondary">Cancel</button><button type="submit" class="primary">Confirm pick</button></menu></form></dialog>
   </main>
-
-  <script src="shared.js"></script>
-  <script src="board.js"></script>
+  <script src="./shared.js"></script>
+  <script src="./board.js"></script>
 </body>
 </html>

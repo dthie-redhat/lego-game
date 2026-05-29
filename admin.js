@@ -1,151 +1,59 @@
-const offlineModeToggle = document.getElementById("offlineModeToggle");
-const modeStatus = document.getElementById("modeStatus");
-const adminRemaining = document.getElementById("adminRemaining");
-const adminEntries = document.getElementById("adminEntries");
-const adminWinners = document.getElementById("adminWinners");
-const drawButton = document.getElementById("drawButton");
-const closeBannerButton = document.getElementById("closeBannerButton");
-const exportButton = document.getElementById("exportButton");
-const resetButton = document.getElementById("resetButton");
-const brickCountForm = document.getElementById("brickCountForm");
-const brickCountInput = document.getElementById("brickCountInput");
-const testModeToggle = document.getElementById("testModeToggle");
-const winnerHistoryList = document.getElementById("winnerHistoryList");
-
+const modeSelect = document.getElementById("modeSelect");
+const testModeBox = document.getElementById("testMode");
+const brickCount = document.getElementById("brickCount");
+const applyBrickCount = document.getElementById("applyBrickCount");
+const drawWinnerBtn = document.getElementById("drawWinner");
+const exportCsvBtn = document.getElementById("exportCsv");
+const resetBoardBtn = document.getElementById("resetBoard");
+const adminNotice = document.getElementById("adminNotice");
+const entriesCount = document.getElementById("entriesCount");
+const remainingAdmin = document.getElementById("remainingAdmin");
+const winnersAdmin = document.getElementById("winnersAdmin");
+const winnerHistory = document.getElementById("winnerHistory");
 let state = defaultState();
-let unsubscribe = null;
-let resubscribing = false;
+let unsub = null;
 
-async function startAdmin() {
-  offlineModeToggle.checked = getMode() === "offline";
+async function boot() {
+  modeSelect.value = getMode();
   await resubscribe();
 }
-
 async function resubscribe() {
-  if (resubscribing) return;
-  resubscribing = true;
-  if (typeof unsubscribe === "function") unsubscribe();
-  renderModeStatus();
-  unsubscribe = await subscribeState((nextState, error) => {
-    if (error) {
-      modeStatus.textContent = `Firebase error: ${error.message}. Switch to offline mode if the event connection is wobbling.`;
-      return;
-    }
+  if (unsub) unsub();
+  unsub = await subscribeState((nextState, error) => {
+    if (error) { notice(`Connection issue: ${error.message}`); return; }
     state = nextState;
     renderAdmin();
+    if (getMode() === "offline") notice("Offline mode is active. Admin and board must be on this same browser/device to share state.");
+    else if (!hasFirebaseConfig()) notice("Firebase is not configured yet. Complete firebase-config.js or use offline mode.");
+    else hideNotice();
   });
-  resubscribing = false;
 }
-
-function renderModeStatus() {
-  const mode = getMode();
-  if (mode === "offline") {
-    modeStatus.textContent = "Offline mode active. Board and admin only sync when opened in this same browser/device.";
-  } else if (!hasFirebaseConfig()) {
-    modeStatus.textContent = "Online mode selected, but Firebase is not configured. Update firebase-config.js.";
-  } else {
-    modeStatus.textContent = "Online mode active. Board and admin sync through Firebase across devices.";
-  }
-}
-
+function notice(msg) { adminNotice.textContent = msg; adminNotice.classList.remove("hidden"); }
+function hideNotice() { adminNotice.textContent = ""; adminNotice.classList.add("hidden"); }
 function renderAdmin() {
-  const entries = Object.keys(state.selections).length;
-  adminRemaining.textContent = state.totalBricks - entries;
-  adminEntries.textContent = entries;
-  adminWinners.textContent = state.winnerHistory.length;
-  brickCountInput.value = state.totalBricks;
-  testModeToggle.checked = Boolean(state.settings && state.settings.testMode);
-  renderWinnerHistory();
-  renderModeStatus();
-}
-
-offlineModeToggle.addEventListener("change", async () => {
-  const nextMode = offlineModeToggle.checked ? "offline" : "online";
-  const message = nextMode === "offline"
-    ? "Switch to offline mode? This will use this browser's local copy and stop cross-device syncing."
-    : "Switch to online Firebase mode? The board will use the shared Firebase game state.";
-  if (!confirm(message)) {
-    offlineModeToggle.checked = !offlineModeToggle.checked;
-    return;
-  }
-  setMode(nextMode);
-  await resubscribe();
-});
-
-testModeToggle.addEventListener("change", async () => {
-  await mutateState(current => ({
-    state: normaliseState({
-      ...current,
-      settings: { ...current.settings, testMode: testModeToggle.checked }
-    })
-  }));
-});
-
-brickCountForm.addEventListener("submit", async event => {
-  event.preventDefault();
-  const nextTotal = clampBrickCount(Number(brickCountInput.value));
-  if (nextTotal !== Number(brickCountInput.value)) brickCountInput.value = nextTotal;
-  if (!confirm(`Change the board to ${nextTotal} bricks? This resets all selections and drawn winners.`)) return;
-  await resetGame(nextTotal);
-});
-
-resetButton.addEventListener("click", async () => {
-  if (!confirm("Reset all selected numbers, entries, banners and already-drawn winners?")) return;
-  await resetGame(state.totalBricks);
-});
-
-closeBannerButton.addEventListener("click", async () => {
-  await mutateState(current => ({ state: { ...current, currentBanner: null } }));
-});
-
-drawButton.addEventListener("click", async () => {
-  try {
-    const { result } = await mutateState(current => {
-      const selectedEntries = Object.values(current.selections);
-      const availableDrawEntries = selectedEntries.filter(selection => !selection.drawnAt);
-      if (selectedEntries.length === 0) {
-        return { state: { ...current, currentBanner: { message: "No bricks have been selected yet.", celebratory: false, id: crypto.randomUUID() } }, result: { ok: false } };
-      }
-      if (availableDrawEntries.length === 0) {
-        return { state: { ...current, currentBanner: { message: "All selected bricks have already been drawn. Reset the board to start again.", celebratory: false, id: crypto.randomUUID() } }, result: { ok: false } };
-      }
-      const winner = availableDrawEntries[Math.floor(Math.random() * availableDrawEntries.length)];
-      const now = new Date().toISOString();
-      const updatedWinner = { ...winner, drawnAt: now };
-      const next = normaliseState({
-        ...current,
-        selections: { ...current.selections, [winner.number]: updatedWinner },
-        winnerHistory: [...current.winnerHistory, { number: winner.number, email: winner.email || "", drawnAt: now }],
-        currentBanner: { message: `Winner: brick ${winner.number}`, celebratory: true, id: crypto.randomUUID() }
-      });
-      return { state: next, result: { ok: true, winner: winner.number } };
-    });
-  } catch (error) {
-    alert(`Could not draw a winner: ${error.message}`);
-  }
-});
-
-exportButton.addEventListener("click", () => {
-  const csv = buildCsv(state);
-  downloadFile(csv, `pick-a-brick-selections-${dateStamp()}.csv`, "text/csv");
-});
-
-function renderWinnerHistory() {
-  winnerHistoryList.innerHTML = "";
-  if (!state.winnerHistory.length) {
-    const li = document.createElement("li");
-    li.className = "empty-history";
-    li.textContent = "No winners drawn yet.";
-    winnerHistoryList.appendChild(li);
-    return;
-  }
-  state.winnerHistory.slice().reverse().forEach((winner, indexFromLatest) => {
-    const drawNumber = state.winnerHistory.length - indexFromLatest;
-    const li = document.createElement("li");
-    const drawnTime = winner.drawnAt ? new Date(winner.drawnAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
-    li.innerHTML = `<strong>#${drawNumber}: Brick ${escapeHtml(winner.number)}</strong><span>${escapeHtml(winner.email || "No email recorded")}${drawnTime ? ` · ${escapeHtml(drawnTime)}` : ""}</span>`;
-    winnerHistoryList.appendChild(li);
+  const picked = Object.keys(state.selections).length;
+  entriesCount.textContent = picked;
+  remainingAdmin.textContent = state.totalBricks - picked;
+  winnersAdmin.textContent = state.winnerHistory.length;
+  brickCount.value = state.totalBricks;
+  testModeBox.checked = state.testMode;
+  winnerHistory.innerHTML = state.winnerHistory.length ? "" : `<p class="muted">No winners drawn yet.</p>`;
+  [...state.winnerHistory].reverse().forEach(w => {
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.innerHTML = `<strong>#${w.drawOrder}: Brick ${w.number}</strong><br>${w.email}<br><span class="muted">${new Date(w.timestamp).toLocaleString()}</span>`;
+    winnerHistory.appendChild(div);
   });
 }
-
-startAdmin();
+modeSelect.addEventListener("change", async () => { setMode(modeSelect.value); await resubscribe(); });
+testModeBox.addEventListener("change", async () => { try { await setTestMode(testModeBox.checked); } catch (err) { alert(err.message); } });
+applyBrickCount.addEventListener("click", async () => {
+  const total = Number(brickCount.value);
+  if (!Number.isInteger(total) || total < 4 || total > 500) return alert("Choose a brick count between 4 and 500.");
+  if (!confirm(`Reset the game and render ${total} bricks?`)) return;
+  try { await resetGame(total); } catch (err) { alert(err.message); }
+});
+drawWinnerBtn.addEventListener("click", async () => { try { await drawWinner(); } catch (err) { alert(err.message); } });
+exportCsvBtn.addEventListener("click", () => downloadText(`pick-a-brick-entries-${new Date().toISOString().slice(0,10)}.csv`, entriesToCsv(state)));
+resetBoardBtn.addEventListener("click", async () => { if (confirm("Reset everything including entries and winners?")) { try { await resetGame(state.totalBricks); } catch (err) { alert(err.message); } } });
+boot();
