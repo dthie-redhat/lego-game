@@ -7,7 +7,7 @@ window.FIREBASE_CONFIG = {
 //  storageBucket: "lego-game-backend.appspot.com",
   storageBucket: "lego-game-backend.firebasestorage.app",
   messagingSenderId: "826839520893",
-  appId: "1:826839520893:web:c6e4a94de142df43548314"
+  appId: "1:826839520893:web:c6e4a94de142df43548314",
   measurementId: "G-JSHM583DQZ"
 };
 
