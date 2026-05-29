@@ -4,8 +4,8 @@ window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBKMEjxdn6QwIaoXDIMiEZwUcOd64JwlQk",
   authDomain: "lego-game-backend.firebaseapp.com",
   projectId: "lego-game-backend",
-  storageBucket: "lego-game-backend.appspot.com",
-//  storageBucket: "lego-game-backend.firebasestorage.app",
+//  storageBucket: "lego-game-backend.appspot.com",
+  storageBucket: "lego-game-backend.firebasestorage.app",
   messagingSenderId: "826839520893",
   appId: "1:826839520893:web:c6e4a94de142df43548314"
   measurementId: "G-JSHM583DQZ"
