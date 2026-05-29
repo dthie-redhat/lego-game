@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pick a Brick | Prize Draw</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Red Hat × NTT Partner Event</p>
+        <h1>Pick a Brick. Pick a Number.</h1>
+        <p class="intro">Choose one available brick for your chance to win one of four LEGO® prizes.</p>
+      </div>
+      <div class="counter" aria-live="polite">
+        <span id="remainingCount">100</span>
+        <small>numbers left</small>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Game controls">
+      <button id="resetButton" class="secondary" type="button">Reset board</button>
+      <button id="exportButton" class="secondary" type="button">Export selections</button>
+      <button id="drawButton" class="primary" type="button">Draw winner</button>
+    </section>
+
+    <section id="winnerPanel" class="winner-panel hidden" aria-live="polite"></section>
+
+    <section class="board" id="brickBoard" aria-label="Pick a brick number"></section>
+
+    <dialog id="confirmDialog">
+      <form method="dialog" class="dialog-card">
+        <h2 id="dialogTitle">Confirm selection</h2>
+        <p id="dialogText"></p>
+        <label>
+          Name or company <span>optional</span>
+          <input id="entrantName" type="text" maxlength="80" autocomplete="off" />
+        </label>
+        <menu>
+          <button value="cancel" class="secondary">Cancel</button>
+          <button id="confirmPick" value="confirm" class="primary">Confirm pick</button>
+        </menu>
+      </form>
+    </dialog>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
