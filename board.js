@@ -35,7 +35,8 @@ function renderBoard() {
     const isPicked = Boolean(state.selections[number]);
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `brick-button brick-${colour} ${isPicked ? "picked" : ""}`;
+    const shape = brickShapeFor(number);
+    btn.className = `brick-button brick-${colour} brick-shape-${shape} ${isPicked ? "picked" : ""}`;
     btn.disabled = isPicked;
     btn.ariaLabel = isPicked ? `Number ${number} has already been selected` : `Select brick number ${number}`;
     btn.innerHTML = `<span class="brick-inner"><span class="brick-face"><span class="brick-number">${number}</span></span><span class="brick-back" aria-hidden="true"></span></span>`;
@@ -46,6 +47,18 @@ function renderBoard() {
   remainingCount.textContent = String(state.totalBricks - picked);
   winnersDrawnCount.textContent = String(state.winnerHistory.length);
 }
+function brickShapeFor(number) {
+  // A repeating tessellation inspired by physical LEGO layouts.
+  // wide = 2x4 brick, tall = rotated 2x4 brick, square = simplified 2x2 brick.
+  // CSS grid-auto-flow:dense packs these together so the board scales cleanly
+  // when the organiser changes the total brick count.
+  const pattern = [
+    "wide", "wide", "tall", "square", "wide", "tall", "square", "wide",
+    "square", "tall", "wide", "wide", "tall", "square", "wide", "square"
+  ];
+  return pattern[(number - 1) % pattern.length];
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch]));
 }
