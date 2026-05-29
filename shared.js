@@ -39,7 +39,8 @@ function randomTestEmail() {
   const a = adjectives[Math.floor(Math.random() * adjectives.length)];
   const n = nouns[Math.floor(Math.random() * nouns.length)];
   const x = Math.floor(10 + Math.random() * 90);
-  return `${a}${n}${x}@test.local`;
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${a}${n}${x}${suffix}@test.local`;
 }
 function hasFirebaseConfig() {
   const cfg = window.FIREBASE_CONFIG || {};
@@ -121,6 +122,14 @@ async function claimBrick(number, email) {
   return updateState(state => {
     if (number < 1 || number > state.totalBricks) throw new Error("That number is outside the current board.");
     if (state.selections[number]) throw new Error("That brick has already been selected.");
+
+    const emailAlreadyUsed = Object.values(state.selections || {}).some(entry =>
+      String(entry?.email || "").trim().toLowerCase() === email
+    );
+    if (emailAlreadyUsed) {
+      throw new Error("This email address has already been used for today's draw.");
+    }
+
     state.selections[number] = { email, number, timestamp: new Date().toISOString(), drawn: false, drawOrder: "" };
     return state;
   });

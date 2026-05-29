@@ -62,3 +62,8 @@ Enable test mode in `admin.html` to auto-generate short fake email addresses suc
 - Logo display is constrained with CSS (`max-height`) so the supplied logo images do not dominate the banner.
 - The public winner splash displays both the winning brick number and the winner email.
 - The public page no longer mentions `admin.html`.
+
+
+## Entry uniqueness
+
+The board now checks submitted email addresses against the current game state before accepting a brick. Email comparison is case-insensitive and trimmed. Resetting the board clears all entries, winners, and the used-email list so the same person can enter again on a second event day.

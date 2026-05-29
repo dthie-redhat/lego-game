@@ -14,7 +14,7 @@
     <section id="connectionNotice" class="notice hidden" aria-live="polite"></section>
     <section id="winnerPanel" class="winner-panel hidden" aria-live="polite"></section>
     <section class="board" id="brickBoard" aria-label="Pick a brick number"></section>
-    <dialog id="confirmDialog"><form id="entryForm" class="dialog-card" novalidate><h2>Enter your email</h2><p id="dialogText"></p><label>Email address<input id="entrantEmail" name="entrantEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /></label><p id="emailError" class="error-message" aria-live="polite"></p><menu><button id="cancelPick" type="button" class="secondary">Cancel</button><button type="submit" class="primary">Confirm pick</button></menu></form></dialog>
+    <dialog id="confirmDialog"><form id="entryForm" class="dialog-card" novalidate><h2>Enter your email</h2><p id="dialogText"></p><label>Email address<input id="entrantEmail" name="entrantEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /></label><p id="emailError" class="error-message" aria-live="polite"></p><div class="email-disclaimer"><p><strong>One entry per day per person.</strong></p><p>Email addresses are used only to identify a winner of this competition.</p></div><menu><button id="cancelPick" type="button" class="secondary">Cancel</button><button type="submit" class="primary">Confirm pick</button></menu></form></dialog>
   </main>
   <script src="./shared.js"></script>
   <script src="./board.js"></script>
