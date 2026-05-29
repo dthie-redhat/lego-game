@@ -48,7 +48,7 @@ function renderBoard() {
 }
 function renderBanner() {
   if (!state.lastWinner) { winnerPanel.classList.add("hidden"); winnerPanel.innerHTML = ""; return; }
-  winnerPanel.innerHTML = `<button class="close-banner" type="button" aria-label="Close winner banner">×</button>🏆 Winner: Brick ${state.lastWinner.number}<small>Organiser can see the matching email on admin.html</small>`;
+  winnerPanel.innerHTML = `<button class="close-banner" type="button" aria-label="Close winner banner">×</button><span class="winner-title">🏆 Winner: Brick ${state.lastWinner.number}</span><small>${state.lastWinner.email || "Email not recorded"}</small>`;
   winnerPanel.classList.remove("hidden");
   winnerPanel.querySelector("button").addEventListener("click", async () => { try { await clearLastWinnerBanner(); } catch { winnerPanel.classList.add("hidden"); } });
 }

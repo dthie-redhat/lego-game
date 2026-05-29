@@ -51,3 +51,9 @@ Caveat: offline mode uses `localStorage`, so it only shares state within the sam
 ## Test mode
 
 Enable test mode in `admin.html` to auto-generate short fake email addresses such as `novahawk42@test.local` when clicking bricks.
+
+
+## Latest changes
+- The public winner banner now shows the winning brick number and matching email address.
+- The public board no longer references the admin page.
+- The header uses the supplied Red Hat and NTT logo image assets from `assets/`.
