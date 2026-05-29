@@ -12,4 +12,4 @@ window.FIREBASE_CONFIG = {
 };
 
 // Optional: change this if you run more than one event from the same Firebase project.
-window.GAME_ID = "ntt-redhat-lego-game";
+window.GAME_ID = "default";
