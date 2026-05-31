@@ -1,9 +1,69 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Pick a Brick | Admin</title><link rel="stylesheet" href="./styles.css" /><script src="./firebase-config.js"></script></head>
-<body><main class="app"><div class="topbar"><div class="brand brand-logos"><img class="brand-logo redhat-logo" src="./assets/redhat-logo.png" alt="Red Hat" /><span class="brand-separator">×</span><img class="brand-logo ntt-logo" src="./assets/ntt-logo.png" alt="NTT DATA" /><span class="console-label">Organiser Console</span></div><a class="admin-link" href="./index.html">Open board</a></div>
-<section class="admin-grid"><div class="panel"><h1>Game Controls</h1><p class="muted">Use Firebase for real-time cross-device operation. Offline mode uses only this browser’s local storage, useful if the Wi-Fi gremlins arrive.</p><div id="adminNotice" class="notice hidden"></div>
-<label class="field">Mode<select id="modeSelect"><option value="firebase">Firebase online sync</option><option value="offline">Offline local browser only</option></select></label>
-<label class="switch"><input id="testMode" type="checkbox" /> Enable test mode: auto-fill fake emails</label>
-<label class="field">Total bricks<input id="brickCount" type="number" min="4" max="500" step="1" /></label>
-<div class="controls"><button id="applyBrickCount" class="primary" type="button">Apply brick count and reset</button><button id="drawWinner" class="primary" type="button">Draw winner</button><button id="exportCsv" class="secondary" type="button">Export CSV</button><button id="resetBoard" class="danger" type="button">Reset board</button></div></div>
-<div class="panel"><h2>Stats</h2><div class="stats"><div class="stat"><strong id="entriesCount">0</strong><span>entries</span></div><div class="stat"><strong id="remainingAdmin">100</strong><span>left</span></div><div class="stat"><strong id="winnersAdmin">0</strong><span>winners</span></div></div><h2>Winner history</h2><div id="winnerHistory" class="history"></div></div></section></main><script src="./shared.js"></script><script src="./admin.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pick a Brick | Admin</title>
+  <script>
+    window.APP_VERSION = "2026-05-31.2";
+    window.appCacheVersion = function () {
+      try {
+        return localStorage.getItem("pickABrickDisableCache.v1") === "true" ? Date.now() : window.APP_VERSION;
+      } catch (err) {
+        return window.APP_VERSION;
+      }
+    };
+    window.appAssetUrl = function (path) {
+      return path + (path.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(window.appCacheVersion());
+    };
+    document.write('<link rel="stylesheet" href="' + window.appAssetUrl("./styles.css") + '" />');
+    document.write('<script src="' + window.appAssetUrl("./firebase-config.js") + '"><\/script>');
+  </script>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="brand brand-logos">
+        <img class="brand-logo redhat-logo" data-cache-src="./assets/redhat-logo.png" alt="Red Hat" />
+        <span class="brand-separator">×</span>
+        <img class="brand-logo ntt-logo" data-cache-src="./assets/ntt-logo.png" alt="NTT DATA" />
+        <span class="console-label">Organiser Console</span>
+      </div>
+      <a class="admin-link" href="./index.html">Open board</a>
+    </div>
+    <section class="admin-grid">
+      <div class="panel">
+        <h1>Game Controls</h1>
+        <p class="muted">Use Firebase for real-time cross-device operation. Offline mode uses only this browser's local storage and is intended for same-device fallback operation.</p>
+        <div id="adminNotice" class="notice hidden"></div>
+        <label class="field">Mode<select id="modeSelect"><option value="firebase">Firebase online sync</option><option value="offline">Offline local browser only</option></select></label>
+        <label class="switch"><input id="testMode" type="checkbox" /> Enable test email auto-fill</label>
+        <label class="switch"><input id="disableCache" type="checkbox" /> Disable browser caching while testing</label>
+        <label class="field">Total bricks<input id="brickCount" type="number" min="4" max="500" step="1" /></label>
+        <div class="controls">
+          <button id="applyBrickCount" class="primary" type="button">Apply brick count and reset</button>
+          <button id="drawWinner" class="primary" type="button">Draw winner</button>
+          <button id="exportCsv" class="secondary" type="button">Export CSV</button>
+          <button id="resetBoard" class="danger" type="button">Reset board</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Stats</h2>
+        <div class="stats stats-wide">
+          <div class="stat"><strong id="totalBricksAdmin">100</strong><span>total bricks</span></div>
+          <div class="stat"><strong id="entriesCount">0</strong><span>entries</span></div>
+          <div class="stat"><strong id="remainingAdmin">100</strong><span>left</span></div>
+          <div class="stat"><strong id="winnersAdmin">0</strong><span>winners</span></div>
+          <div class="stat"><strong id="currentModeAdmin">Firebase</strong><span>mode</span></div>
+        </div>
+        <h2>Winner history</h2>
+        <div id="winnerHistory" class="history"></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    document.write('<script src="' + window.appAssetUrl("./shared.js") + '"><\/script>');
+    document.write('<script src="' + window.appAssetUrl("./admin.js") + '"><\/script>');
+  </script>
+</body>
+</html>

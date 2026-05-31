@@ -71,13 +71,12 @@ function renderBanner() {
   winnerPanel.querySelector("button").addEventListener("click", async () => { try { await clearLastWinnerBanner(); } catch { winnerPanel.classList.add("hidden"); } });
 }
 function openEntryDialog(number) {
-  if (state.testMode) { claimBrick(number, randomTestEmail()).catch(err => alert(err.message)); return; }
   pendingNumber = number;
   dialogText.textContent = `You are choosing brick ${number}.`;
-  entrantEmail.value = "";
+  entrantEmail.value = state.testMode ? randomTestEmail() : "";
   emailError.textContent = "";
   if (typeof dialog.showModal === "function") dialog.showModal(); else alert("Dialog support is required. Use a current browser.");
-  setTimeout(() => entrantEmail.focus(), 50);
+  setTimeout(() => { entrantEmail.focus(); if (state.testMode) entrantEmail.select(); }, 50);
 }
 cancelPick.addEventListener("click", () => dialog.close());
 entryForm.addEventListener("submit", async ev => {

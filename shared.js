@@ -1,10 +1,37 @@
 const STORAGE_KEY = "pickABrickState.v3";
 const MODE_KEY = "pickABrickMode.v3";
+const CACHE_KEY = "pickABrickDisableCache.v1";
 const COLOURS = ["orange", "red", "blue", "green", "yellow", "black", "white"];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const DEFAULT_TOTAL = 100;
 const adjectives = ["swift", "blue", "red", "bright", "smart", "rapid", "pixel", "nova", "cloud", "solar", "brisk", "neon"];
-const nouns = ["fox", "bear", "otter", "hawk", "eagle", "tiger", "wolf", "lynx", "falcon", "raven", "badger", "panda"];
+const nouns = ["spark", "beam", "brick", "stack", "pilot", "signal", "vector", "orbit", "pixel", "summit", "marker", "relay"];
+const BRICK_ASSETS = {
+  "--brick-grey-wide": "./assets/brick-grey.png",
+  "--brick-grey-tall": "./assets/brick-grey-vertical.png",
+  "--brick-grey-square": "./assets/brick-grey-square.png",
+  "--brick-orange-wide": "./assets/brick-orange.png",
+  "--brick-orange-tall": "./assets/brick-orange-vertical.png",
+  "--brick-orange-square": "./assets/brick-orange-square.png",
+  "--brick-red-wide": "./assets/brick-red.png",
+  "--brick-red-tall": "./assets/brick-red-vertical.png",
+  "--brick-red-square": "./assets/brick-red-square.png",
+  "--brick-blue-wide": "./assets/brick-blue.png",
+  "--brick-blue-tall": "./assets/brick-blue-vertical.png",
+  "--brick-blue-square": "./assets/brick-blue-square.png",
+  "--brick-green-wide": "./assets/brick-green.png",
+  "--brick-green-tall": "./assets/brick-green-vertical.png",
+  "--brick-green-square": "./assets/brick-green-square.png",
+  "--brick-yellow-wide": "./assets/brick-yellow.png",
+  "--brick-yellow-tall": "./assets/brick-yellow-vertical.png",
+  "--brick-yellow-square": "./assets/brick-yellow-square.png",
+  "--brick-black-wide": "./assets/brick-black.png",
+  "--brick-black-tall": "./assets/brick-black-vertical.png",
+  "--brick-black-square": "./assets/brick-black-square.png",
+  "--brick-white-wide": "./assets/brick-white.png",
+  "--brick-white-tall": "./assets/brick-white-vertical.png",
+  "--brick-white-square": "./assets/brick-white-square.png"
+};
 
 function defaultState(total = DEFAULT_TOTAL) {
   return {
@@ -63,9 +90,36 @@ function saveLocalState(state) {
 function randomTestEmail() {
   const a = adjectives[Math.floor(Math.random() * adjectives.length)];
   const n = nouns[Math.floor(Math.random() * nouns.length)];
-  const x = Math.floor(10 + Math.random() * 90);
+  const x = Math.floor(1000 + Math.random() * 9000);
   const suffix = Math.random().toString(36).slice(2, 6);
-  return `${a}${n}${x}${suffix}@test.local`;
+  return `${a}-${n}-${x}-${suffix}@test.local`;
+}
+function isCacheDisabled() {
+  try { return localStorage.getItem(CACHE_KEY) === "true"; }
+  catch (err) { return false; }
+}
+function setCacheDisabled(enabled) {
+  localStorage.setItem(CACHE_KEY, enabled ? "true" : "false");
+}
+function cacheVersion() {
+  return isCacheDisabled() ? Date.now() : (window.APP_VERSION || "dev");
+}
+function assetUrl(path) {
+  if (typeof window.appAssetUrl === "function") return window.appAssetUrl(path);
+  return path + (path.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(cacheVersion());
+}
+function applyCacheBustingAssets() {
+  Object.entries(BRICK_ASSETS).forEach(([name, path]) => {
+    document.documentElement.style.setProperty(name, `url("${assetUrl(path)}")`);
+  });
+  document.querySelectorAll("[data-cache-src]").forEach(el => {
+    el.setAttribute("src", assetUrl(el.getAttribute("data-cache-src")));
+  });
+}
+function watchCacheSettingReload() {
+  window.addEventListener("storage", ev => {
+    if (ev.key === CACHE_KEY) window.location.reload();
+  });
 }
 function hasFirebaseConfig() {
   const cfg = window.FIREBASE_CONFIG || {};
@@ -180,10 +234,15 @@ async function clearLastWinnerBanner() {
 async function resetGame(total) { return setState(defaultState(Number(total) || DEFAULT_TOTAL)); }
 async function setTestMode(enabled) { return updateState(state => { state.testMode = Boolean(enabled); return state; }); }
 function entriesToCsv(state) {
-  const rows = [["Number","Email","Selected At","Drawn","Draw Order"]];
+  const winnersByNumber = {};
+  (state.winnerHistory || []).forEach(w => { winnersByNumber[Number(w.number)] = w; });
+  const rows = [["Number","Email","Selected At","Winner Status","Draw Order","Winner Timestamp"]];
   for (let i=1;i<=state.totalBricks;i++) {
     const e = state.selections[i];
-    if (e) rows.push([i, e.email || "", e.timestamp || "", e.drawn ? "yes" : "no", e.drawOrder || ""]);
+    if (e) {
+      const winner = winnersByNumber[i] || {};
+      rows.push([i, e.email || "", e.timestamp || "", e.drawn ? "winner" : "", e.drawOrder || winner.drawOrder || "", winner.timestamp || ""]);
+    }
   }
   return rows.map(r => r.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
 }
@@ -193,3 +252,7 @@ function downloadText(filename, text) {
   const a = document.createElement("a");
   a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
+
+window.assetUrl = assetUrl;
+applyCacheBustingAssets();
+watchCacheSettingReload();

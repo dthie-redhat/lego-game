@@ -1,5 +1,6 @@
 const modeSelect = document.getElementById("modeSelect");
 const testModeBox = document.getElementById("testMode");
+const disableCacheBox = document.getElementById("disableCache");
 const brickCount = document.getElementById("brickCount");
 const applyBrickCount = document.getElementById("applyBrickCount");
 const drawWinnerBtn = document.getElementById("drawWinner");
@@ -7,14 +8,17 @@ const exportCsvBtn = document.getElementById("exportCsv");
 const resetBoardBtn = document.getElementById("resetBoard");
 const adminNotice = document.getElementById("adminNotice");
 const entriesCount = document.getElementById("entriesCount");
+const totalBricksAdmin = document.getElementById("totalBricksAdmin");
 const remainingAdmin = document.getElementById("remainingAdmin");
 const winnersAdmin = document.getElementById("winnersAdmin");
+const currentModeAdmin = document.getElementById("currentModeAdmin");
 const winnerHistory = document.getElementById("winnerHistory");
 let state = defaultState();
 let unsub = null;
 
 async function boot() {
   modeSelect.value = getMode();
+  disableCacheBox.checked = isCacheDisabled();
   await resubscribe();
 }
 async function resubscribe() {
@@ -32,9 +36,11 @@ function notice(msg) { adminNotice.textContent = msg; adminNotice.classList.remo
 function hideNotice() { adminNotice.textContent = ""; adminNotice.classList.add("hidden"); }
 function renderAdmin() {
   const picked = Object.keys(state.selections).length;
+  totalBricksAdmin.textContent = state.totalBricks;
   entriesCount.textContent = picked;
   remainingAdmin.textContent = state.totalBricks - picked;
   winnersAdmin.textContent = state.winnerHistory.length;
+  currentModeAdmin.textContent = getMode() === "offline" ? "Offline" : "Firebase";
   brickCount.value = state.totalBricks;
   testModeBox.checked = state.testMode;
   winnerHistory.innerHTML = state.winnerHistory.length ? "" : `<p class="muted">No winners drawn yet.</p>`;
@@ -47,6 +53,14 @@ function renderAdmin() {
 }
 modeSelect.addEventListener("change", async () => { setMode(modeSelect.value); await resubscribe(); });
 testModeBox.addEventListener("change", async () => { try { await setTestMode(testModeBox.checked); } catch (err) { alert(err.message); } });
+disableCacheBox.addEventListener("change", () => {
+  try {
+    setCacheDisabled(disableCacheBox.checked);
+    window.location.reload();
+  } catch (err) {
+    alert(`Could not update cache setting: ${err.message}`);
+  }
+});
 applyBrickCount.addEventListener("click", async () => {
   const total = Number(brickCount.value);
   if (!Number.isInteger(total) || total < 4 || total > 500) return alert("Choose a brick count between 4 and 500.");
