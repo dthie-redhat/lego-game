@@ -28,7 +28,7 @@ Both the hosted board and the local MacBook board app subscribe to the same Fire
 
 The MacBook board launcher opens the board with `?mode=firebase`, so it always uses the shared Firebase event state even if that browser previously used offline mode.
 
-The hosted admin page is locked to Firebase event mode for the same reason. Admin actions are intended to control every active board display through Firebase.
+The hosted admin page defaults to Firebase event mode for the same reason. Admin actions in Firebase mode control every active board display through Firebase. Offline mode remains available from the admin console as a same-browser fallback for local testing or no-network use.
 
 ## MacBook Board App
 
@@ -100,7 +100,7 @@ These rules are permissive for testing only. For production or a public event, l
 
 Online mode uses Firebase Firestore. It allows the hosted board, hosted admin console, and MacBook board app to run on different devices, with real-time updates when participants claim bricks or organisers draw winners.
 
-Offline mode is selected from `admin.html`. It uses `localStorage` only, so the board and admin console must run in the same browser/device to share state. Offline mode still supports claiming bricks, unique email validation, winner draws, reset, CSV export, test mode, and configurable brick counts.
+Offline mode is selected from `admin.html`. It uses `localStorage` only, so the board and admin console must run in the same browser/device and from the same site origin to share state. For example, a GitHub Pages admin tab and a GitHub Pages board tab in the same browser can share offline state; a GitHub Pages admin tab and a `127.0.0.1` local board cannot. Offline mode still supports claiming bricks, unique email validation, winner draws, reset, CSV export, test mode, and configurable brick counts.
 
 Do not use offline mode when you need the hosted admin page to control the MacBook board app or any other remote board display.
 

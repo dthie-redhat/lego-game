@@ -131,6 +131,11 @@ function watchCacheSettingReload() {
     if (ev.key === CACHE_KEY) window.location.reload();
   });
 }
+function watchModeSettingReload() {
+  window.addEventListener("storage", ev => {
+    if (ev.key === MODE_KEY && !isModeForced()) window.location.reload();
+  });
+}
 function hasFirebaseConfig() {
   const cfg = window.FIREBASE_CONFIG || {};
   return cfg.apiKey && !String(cfg.apiKey).includes("PASTE_") && cfg.projectId && !String(cfg.projectId).includes("PASTE_");
@@ -266,3 +271,4 @@ function downloadText(filename, text) {
 window.assetUrl = assetUrl;
 applyCacheBustingAssets();
 watchCacheSettingReload();
+watchModeSettingReload();

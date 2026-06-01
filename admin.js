@@ -6,6 +6,7 @@ const applyBrickCount = document.getElementById("applyBrickCount");
 const drawWinnerBtn = document.getElementById("drawWinner");
 const exportCsvBtn = document.getElementById("exportCsv");
 const resetBoardBtn = document.getElementById("resetBoard");
+const boardLink = document.getElementById("boardLink");
 const adminNotice = document.getElementById("adminNotice");
 const entriesCount = document.getElementById("entriesCount");
 const totalBricksAdmin = document.getElementById("totalBricksAdmin");
@@ -20,6 +21,7 @@ async function boot() {
   modeSelect.value = getMode();
   modeSelect.disabled = isModeForced();
   disableCacheBox.checked = isCacheDisabled();
+  updateBoardLink();
   await resubscribe();
 }
 async function resubscribe() {
@@ -28,14 +30,19 @@ async function resubscribe() {
     if (error) { notice(`Connection issue: ${error.message}`); return; }
     state = nextState;
     renderAdmin();
-    if (isModeForced()) notice("Firebase event mode is locked for this page. Hosted and local board displays will share the same Firebase game state.");
-    else if (getMode() === "offline") notice("Offline mode is active. Admin and board must be on this same browser/device to share state.");
+    updateBoardLink();
+    if (isModeForced()) notice("Mode is locked by this page URL. Open admin.html without a mode query parameter to switch modes.");
+    else if (getMode() === "offline") notice("Offline mode is active. Admin and board must be on this same browser/device and same site origin to share state.");
     else if (!hasFirebaseConfig()) notice("Firebase is not configured yet. Complete firebase-config.js or use offline mode.");
     else hideNotice();
   });
 }
 function notice(msg) { adminNotice.textContent = msg; adminNotice.classList.remove("hidden"); }
 function hideNotice() { adminNotice.textContent = ""; adminNotice.classList.add("hidden"); }
+function updateBoardLink() {
+  if (!boardLink) return;
+  boardLink.href = isModeForced() ? `./index.html?mode=${encodeURIComponent(getMode())}` : "./index.html";
+}
 function renderAdmin() {
   const picked = Object.keys(state.selections).length;
   totalBricksAdmin.textContent = state.totalBricks;
@@ -53,7 +60,7 @@ function renderAdmin() {
     winnerHistory.appendChild(div);
   });
 }
-modeSelect.addEventListener("change", async () => { setMode(modeSelect.value); await resubscribe(); });
+modeSelect.addEventListener("change", async () => { setMode(modeSelect.value); updateBoardLink(); await resubscribe(); });
 testModeBox.addEventListener("change", async () => { try { await setTestMode(testModeBox.checked); } catch (err) { alert(err.message); } });
 disableCacheBox.addEventListener("change", () => {
   try {
