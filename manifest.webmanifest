@@ -1,0 +1,30 @@
+{
+  "name": "Pick a Brick Prize Draw",
+  "short_name": "Pick a Brick",
+  "description": "Red Hat and NTT prize draw board for event participants.",
+  "start_url": "./index.html?mode=firebase&surface=pwa",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "background_color": "#f7f7f7",
+  "theme_color": "#ee0000",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "./assets/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

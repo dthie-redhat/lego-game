@@ -10,6 +10,7 @@ const entryForm = document.getElementById("entryForm");
 const entrantEmail = document.getElementById("entrantEmail");
 const emailError = document.getElementById("emailError");
 const cancelPick = document.getElementById("cancelPick");
+const DISMISSED_WINNER_KEY = "pickABrickDismissedWinner.v1";
 let state = defaultState();
 let pendingNumber = null;
 
@@ -64,11 +65,20 @@ function escapeHtml(value) {
 }
 function renderBanner() {
   if (!state.lastWinner) { winnerPanel.classList.add("hidden"); winnerPanel.innerHTML = ""; return; }
+  const winnerId = `${state.lastWinner.drawOrder || ""}:${state.lastWinner.number || ""}:${state.lastWinner.timestamp || ""}`;
+  if (localStorage.getItem(DISMISSED_WINNER_KEY) === winnerId) {
+    winnerPanel.classList.add("hidden");
+    winnerPanel.innerHTML = "";
+    return;
+  }
   const number = Number(state.lastWinner.number);
   const email = state.lastWinner.email || state.selections?.[number]?.email || "Email not recorded";
   winnerPanel.innerHTML = `<button class="close-banner" type="button" aria-label="Close winner banner">×</button><span class="winner-title">🏆 Winner: Brick ${escapeHtml(number)}</span><small class="winner-email">${escapeHtml(email)}</small>`;
   winnerPanel.classList.remove("hidden");
-  winnerPanel.querySelector("button").addEventListener("click", async () => { try { await clearLastWinnerBanner(); } catch { winnerPanel.classList.add("hidden"); } });
+  winnerPanel.querySelector("button").addEventListener("click", () => {
+    localStorage.setItem(DISMISSED_WINNER_KEY, winnerId);
+    winnerPanel.classList.add("hidden");
+  });
 }
 function openEntryDialog(number) {
   pendingNumber = number;

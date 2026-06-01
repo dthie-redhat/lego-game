@@ -77,8 +77,18 @@ function isEmailAlreadyUsed(state, email) {
   if (state.usedEmails && state.usedEmails[key]) return true;
   return Object.values(state.selections || {}).some(entry => normaliseEmail(entry?.email) === normalised);
 }
-function getMode() { return localStorage.getItem(MODE_KEY) || "firebase"; }
-function setMode(mode) { localStorage.setItem(MODE_KEY, mode === "offline" ? "offline" : "firebase"); }
+function getForcedMode() {
+  const configured = window.PICK_A_BRICK_FORCE_MODE;
+  if (configured === "firebase" || configured === "offline") return configured;
+  const queryMode = new URLSearchParams(window.location.search).get("mode");
+  return queryMode === "firebase" || queryMode === "offline" ? queryMode : null;
+}
+function isModeForced() { return Boolean(getForcedMode()); }
+function getMode() { return getForcedMode() || localStorage.getItem(MODE_KEY) || "firebase"; }
+function setMode(mode) {
+  if (isModeForced()) return;
+  localStorage.setItem(MODE_KEY, mode === "offline" ? "offline" : "firebase");
+}
 function loadLocalState() { return normaliseState(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
 function saveLocalState(state) {
   const next = normaliseState(state);

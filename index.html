@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ee0000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Pick a Brick" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Pick a Brick | Prize Draw</title>
   <script>
     window.APP_VERSION = "2026-05-31.2";
@@ -16,6 +20,8 @@
     window.appAssetUrl = function (path) {
       return path + (path.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(window.appCacheVersion());
     };
+    document.write('<link rel="manifest" href="' + window.appAssetUrl("./manifest.webmanifest") + '" />');
+    document.write('<link rel="apple-touch-icon" href="' + window.appAssetUrl("./assets/pwa-icon-192.png") + '" />');
     document.write('<link rel="stylesheet" href="' + window.appAssetUrl("./styles.css") + '" />');
     document.write('<script src="' + window.appAssetUrl("./firebase-config.js") + '"><\/script>');
   </script>
@@ -32,6 +38,7 @@
   <script>
     document.write('<script src="' + window.appAssetUrl("./shared.js") + '"><\/script>');
     document.write('<script src="' + window.appAssetUrl("./board.js") + '"><\/script>');
+    document.write('<script src="' + window.appAssetUrl("./pwa.js") + '"><\/script>');
   </script>
 </body>
 </html>

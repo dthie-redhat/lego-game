@@ -18,6 +18,7 @@ let unsub = null;
 
 async function boot() {
   modeSelect.value = getMode();
+  modeSelect.disabled = isModeForced();
   disableCacheBox.checked = isCacheDisabled();
   await resubscribe();
 }
@@ -27,7 +28,8 @@ async function resubscribe() {
     if (error) { notice(`Connection issue: ${error.message}`); return; }
     state = nextState;
     renderAdmin();
-    if (getMode() === "offline") notice("Offline mode is active. Admin and board must be on this same browser/device to share state.");
+    if (isModeForced()) notice("Firebase event mode is locked for this page. Hosted and local board displays will share the same Firebase game state.");
+    else if (getMode() === "offline") notice("Offline mode is active. Admin and board must be on this same browser/device to share state.");
     else if (!hasFirebaseConfig()) notice("Firebase is not configured yet. Complete firebase-config.js or use offline mode.");
     else hideNotice();
   });

@@ -6,6 +6,7 @@
   <title>Pick a Brick | Admin</title>
   <script>
     window.APP_VERSION = "2026-05-31.2";
+    window.PICK_A_BRICK_FORCE_MODE = "firebase";
     window.appCacheVersion = function () {
       try {
         return localStorage.getItem("pickABrickDisableCache.v1") === "true" ? Date.now() : window.APP_VERSION;
@@ -29,12 +30,12 @@
         <img class="brand-logo ntt-logo" data-cache-src="./assets/ntt-logo.png" alt="NTT DATA" />
         <span class="console-label">Organiser Console</span>
       </div>
-      <a class="admin-link" href="./index.html">Open board</a>
+      <a class="admin-link" href="./index.html?mode=firebase">Open board</a>
     </div>
     <section class="admin-grid">
       <div class="panel">
         <h1>Game Controls</h1>
-        <p class="muted">Use Firebase for real-time cross-device operation. Offline mode uses only this browser's local storage and is intended for same-device fallback operation.</p>
+        <p class="muted">Use Firebase event mode for the hosted admin page, hosted board, and MacBook board app. Offline mode is only a same-browser fallback.</p>
         <div id="adminNotice" class="notice hidden"></div>
         <label class="field">Mode<select id="modeSelect"><option value="firebase">Firebase online sync</option><option value="offline">Offline local browser only</option></select></label>
         <label class="switch"><input id="testMode" type="checkbox" /> Enable test email auto-fill</label>
