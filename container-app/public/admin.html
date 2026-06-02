@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pick a Brick | Admin</title>
+  <script>
+    window.APP_VERSION = "container-2026-06-01.1";
+    document.write('<link rel="stylesheet" href="./styles.css?v=' + encodeURIComponent(window.APP_VERSION) + '" />');
+  </script>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="brand brand-logos">
+        <img class="brand-logo redhat-logo" data-cache-src="./assets/redhat-logo.png" alt="Red Hat" />
+        <span class="brand-separator">&times;</span>
+        <img class="brand-logo ntt-logo" data-cache-src="./assets/ntt-logo.png" alt="NTT DATA" />
+        <span class="console-label">Organiser Console</span>
+      </div>
+      <a id="boardLink" class="admin-link" href="./index.html">Open board</a>
+    </div>
+
+    <section class="admin-grid">
+      <div class="panel">
+        <h1>Game Controls</h1>
+        <p class="muted">All state is stored in the containerized PostgreSQL database and shared live with connected boards.</p>
+        <div id="adminNotice" class="notice hidden"></div>
+        <label class="switch"><input id="testMode" type="checkbox" /> Enable test email auto-fill</label>
+        <label class="field">Total bricks<input id="brickCount" type="number" min="4" max="500" step="1" /></label>
+        <div class="controls">
+          <button id="applyBrickCount" class="primary" type="button">Apply brick count and reset</button>
+          <button id="drawWinner" class="primary" type="button">Draw winner</button>
+          <a id="exportCsv" class="secondary button-link" href="./api/admin/export.csv">Export CSV</a>
+          <button id="resetBoard" class="danger" type="button">Reset board</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Stats</h2>
+        <div class="stats stats-wide">
+          <div class="stat"><strong id="totalBricksAdmin">100</strong><span>total bricks</span></div>
+          <div class="stat"><strong id="entriesCount">0</strong><span>entries</span></div>
+          <div class="stat"><strong id="remainingAdmin">100</strong><span>left</span></div>
+          <div class="stat"><strong id="winnersAdmin">0</strong><span>winners</span></div>
+          <div class="stat"><strong id="connectionState">Connecting</strong><span>sync</span></div>
+        </div>
+        <h2>Winner history</h2>
+        <div id="winnerHistory" class="history"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.write('<script src="./app.js?v=' + encodeURIComponent(window.APP_VERSION) + '"><\/script>');
+    document.write('<script src="./admin.js?v=' + encodeURIComponent(window.APP_VERSION) + '"><\/script>');
+  </script>
+</body>
+</html>

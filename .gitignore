@@ -1,2 +1,4 @@
 .DS_Store
 data/
+container-app/node_modules/
+container-app/.env

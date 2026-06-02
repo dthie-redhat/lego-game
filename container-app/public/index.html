@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pick a Brick | Prize Draw</title>
+  <script>
+    window.APP_VERSION = "container-2026-06-01.1";
+    document.write('<link rel="stylesheet" href="./styles.css?v=' + encodeURIComponent(window.APP_VERSION) + '" />');
+  </script>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="brand brand-logos">
+        <img class="brand-logo redhat-logo" data-cache-src="./assets/redhat-logo.png" alt="Red Hat" />
+        <span class="brand-separator">&times;</span>
+        <img class="brand-logo ntt-logo" data-cache-src="./assets/ntt-logo.png" alt="NTT DATA" />
+      </div>
+      <button id="fullscreenButton" class="icon-button" type="button" aria-label="Enter fullscreen" title="Fullscreen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10V5h5M14 5h5v5M19 14v5h-5M10 19H5v-5" /></svg>
+      </button>
+    </div>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Mirai '26 Red Hat Prize Draw</p>
+        <h1>Pick a Brick. Pick a Number.</h1>
+        <p class="intro">Choose one available brick for your chance to win a LEGO prize.</p>
+      </div>
+      <div class="counter-stack">
+        <div class="counter"><span id="remainingCount">100</span><small>numbers left</small></div>
+        <div class="counter counter-secondary"><span id="winnersDrawnCount">0</span><small>winners drawn</small></div>
+      </div>
+    </section>
+
+    <section id="connectionNotice" class="notice hidden" aria-live="polite"></section>
+    <section id="winnerPanel" class="winner-panel hidden" aria-live="polite"></section>
+    <section class="board" id="brickBoard" aria-label="Pick a brick number"></section>
+
+    <dialog id="confirmDialog">
+      <form id="entryForm" class="dialog-card" novalidate>
+        <h2>Enter your email</h2>
+        <p id="dialogText"></p>
+        <label>Email address<input id="entrantEmail" name="entrantEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /></label>
+        <p id="emailError" class="error-message" aria-live="polite"></p>
+        <div class="email-disclaimer">
+          <p><strong>One entry per day per person.</strong></p>
+          <p>Email addresses are used only to identify a winner of this competition.</p>
+        </div>
+        <menu>
+          <button id="cancelPick" type="button" class="secondary">Cancel</button>
+          <button type="submit" class="primary">Confirm pick</button>
+        </menu>
+      </form>
+    </dialog>
+  </main>
+
+  <script>
+    document.write('<script src="./app.js?v=' + encodeURIComponent(window.APP_VERSION) + '"><\/script>');
+    document.write('<script src="./board.js?v=' + encodeURIComponent(window.APP_VERSION) + '"><\/script>');
+  </script>
+</body>
+</html>

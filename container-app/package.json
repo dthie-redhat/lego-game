@@ -1,0 +1,15 @@
+{
+  "name": "pick-a-brick-container-app",
+  "version": "1.0.0",
+  "description": "Containerized Pick a Brick prize draw with PostgreSQL backend.",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "check": "node --check src/server.js && node --check src/db.js && node --check src/migrate.js && node --check src/state.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
