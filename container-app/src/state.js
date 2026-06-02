@@ -106,6 +106,8 @@ export async function claimBrick(number, email) {
 
 export async function drawWinner() {
   return withTransaction(async client => {
+    await client.query("SELECT id FROM game_settings WHERE id = 1 FOR UPDATE");
+
     const candidate = await client.query(
       "SELECT number, email FROM entries WHERE drawn = false ORDER BY random() LIMIT 1 FOR UPDATE SKIP LOCKED"
     );
@@ -146,6 +148,7 @@ export async function resetGame(totalBricks) {
   }
 
   return withTransaction(async client => {
+    await client.query("SELECT id FROM game_settings WHERE id = 1 FOR UPDATE");
     await client.query("DELETE FROM entries");
     await client.query(
       `UPDATE game_settings
