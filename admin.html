@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pick a Brick | Admin</title>
   <script>
-    window.APP_VERSION = "2026-06-01.1";
+    window.APP_VERSION = "2026-06-08.1";
     window.appCacheVersion = function () {
       try {
         return localStorage.getItem("pickABrickDisableCache.v1") === "true" ? Date.now() : window.APP_VERSION;
@@ -41,7 +41,7 @@
         <label class="switch"><input id="disableCache" type="checkbox" /> Disable browser caching while testing</label>
         <label class="field">Total bricks<input id="brickCount" type="number" min="4" max="500" step="1" /></label>
         <div class="controls">
-          <button id="applyBrickCount" class="primary" type="button">Apply brick count and reset</button>
+          <button id="applyBrickCount" class="primary" type="button">Apply brick count</button>
           <button id="drawWinner" class="primary" type="button">Draw winner</button>
           <button id="exportCsv" class="secondary" type="button">Export CSV</button>
           <button id="resetBoard" class="danger" type="button">Reset board</button>

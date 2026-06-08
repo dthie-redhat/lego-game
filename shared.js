@@ -247,6 +247,22 @@ async function clearLastWinnerBanner() {
   return updateState(state => { state.lastWinner = null; return state; });
 }
 async function resetGame(total) { return setState(defaultState(Number(total) || DEFAULT_TOTAL)); }
+async function setTotalBricks(total) {
+  total = Number(total);
+  if (!Number.isInteger(total) || total < 4 || total > 500) {
+    throw new Error("Choose a brick count between 4 and 500.");
+  }
+
+  return updateState(state => {
+    const pickedNumbers = Object.keys(state.selections || {}).map(Number);
+    const highestPicked = pickedNumbers.length ? Math.max(...pickedNumbers) : 0;
+    if (highestPicked && total < highestPicked) {
+      throw new Error(`Cannot reduce the board below picked brick ${highestPicked}.`);
+    }
+    state.totalBricks = total;
+    return state;
+  });
+}
 async function setTestMode(enabled) { return updateState(state => { state.testMode = Boolean(enabled); return state; }); }
 function entriesToCsv(state) {
   const winnersByNumber = {};

@@ -73,8 +73,7 @@ disableCacheBox.addEventListener("change", () => {
 applyBrickCount.addEventListener("click", async () => {
   const total = Number(brickCount.value);
   if (!Number.isInteger(total) || total < 4 || total > 500) return alert("Choose a brick count between 4 and 500.");
-  if (!confirm(`Reset the game and render ${total} bricks?`)) return;
-  try { await resetGame(total); } catch (err) { alert(err.message); }
+  try { await setTotalBricks(total); } catch (err) { alert(err.message); }
 });
 drawWinnerBtn.addEventListener("click", async () => { try { await drawWinner(); } catch (err) { alert(err.message); } });
 exportCsvBtn.addEventListener("click", () => downloadText(`pick-a-brick-entries-${new Date().toISOString().slice(0,10)}.csv`, entriesToCsv(state)));
