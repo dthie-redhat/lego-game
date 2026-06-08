@@ -64,9 +64,8 @@ applyBrickCount.addEventListener("click", async () => {
     alert("Choose a brick count between 4 and 500.");
     return;
   }
-  if (!confirm(`Reset the game and render ${total} bricks?`)) return;
   try {
-    state = await resetGame(total);
+    state = await setTotalBricks(total);
     renderAdmin();
   } catch (err) {
     alert(err.message);

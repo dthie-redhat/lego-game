@@ -4,7 +4,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { pool, waitForDatabase } from "./db.js";
 import { migrate } from "./migrate.js";
-import { claimBrick, drawWinner, entriesCsv, getState, resetGame, setTestMode } from "./state.js";
+import { claimBrick, drawWinner, entriesCsv, getState, resetGame, setTestMode, setTotalBricks } from "./state.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..", "public");
@@ -100,6 +100,13 @@ async function handleApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/admin/reset") {
     const body = await readBody(req);
     const state = await resetGame(body.totalBricks);
+    await broadcastState();
+    return sendJson(res, 200, state);
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/brick-count") {
+    const body = await readBody(req);
+    const state = await setTotalBricks(body.totalBricks);
     await broadcastState();
     return sendJson(res, 200, state);
   }

@@ -165,6 +165,29 @@ export async function resetGame(totalBricks) {
   });
 }
 
+export async function setTotalBricks(totalBricks) {
+  const total = Number(totalBricks);
+  if (!Number.isInteger(total) || total < 4 || total > 500) {
+    throw publicError("Choose a brick count between 4 and 500.");
+  }
+
+  return withTransaction(async client => {
+    await client.query("SELECT id FROM game_settings WHERE id = 1 FOR UPDATE");
+    const highestEntryResult = await client.query("SELECT MAX(number) AS highest_number FROM entries");
+    const highestEntry = highestEntryResult.rows[0].highest_number;
+
+    if (highestEntry && total < highestEntry) {
+      throw publicError(`Cannot reduce the board below picked brick ${highestEntry}.`, 409);
+    }
+
+    await client.query(
+      "UPDATE game_settings SET total_bricks = $1, updated_at = now() WHERE id = 1",
+      [total]
+    );
+    return getState(client);
+  });
+}
+
 export async function setTestMode(enabled) {
   return withTransaction(async client => {
     await client.query(

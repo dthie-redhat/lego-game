@@ -74,6 +74,10 @@ async function resetGame(totalBricks) {
   return api("/api/admin/reset", { method: "POST", body: JSON.stringify({ totalBricks }) });
 }
 
+async function setTotalBricks(totalBricks) {
+  return api("/api/admin/brick-count", { method: "POST", body: JSON.stringify({ totalBricks }) });
+}
+
 async function setTestMode(enabled) {
   return api("/api/admin/test-mode", { method: "POST", body: JSON.stringify({ enabled }) });
 }

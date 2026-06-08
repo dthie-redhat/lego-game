@@ -25,7 +25,7 @@ Rebuild the Pick a Brick prize draw as a self-contained container application fo
 - Admin: `/admin.html`
   - Shows current totals, entries, remaining bricks, and winners.
   - Enables test email auto-fill on the board.
-  - Changes total brick count by resetting the game.
+  - Changes total brick count while retaining existing entries and winners.
   - Draws random winners from undrawn entries.
   - Exports entries as CSV.
   - Resets the board for a new day or run.
@@ -38,7 +38,8 @@ Rebuild the Pick a Brick prize draw as a self-contained container application fo
 - Winner draws only include entries that have not already won.
 - Winner draw order is sequential.
 - Reset clears entries, winners, and the last winner banner.
-- Changing the brick count resets the game.
+- Increasing the brick count retains all existing game state.
+- Decreasing the brick count retains all existing game state and is allowed when no picked brick would fall outside the resized board.
 
 ## Live Updates
 
@@ -60,6 +61,9 @@ The app uses Server-Sent Events at `/api/events`. Every successful state change 
 - `POST /api/admin/reset`
   - Body: `{ "totalBricks": 100 }`
   - Clears the game and sets the board size.
+- `POST /api/admin/brick-count`
+  - Body: `{ "totalBricks": 100 }`
+  - Changes the board size without clearing entries or winners.
 - `POST /api/admin/test-mode`
   - Body: `{ "enabled": true }`
   - Toggles board test mode.
