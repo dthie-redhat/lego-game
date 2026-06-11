@@ -127,6 +127,28 @@ Use `Reset board` in `admin.html` to clear claimed bricks, entries, winner histo
 
 Changing `Total bricks` and clicking `Apply brick count` retains all entries, winners, and used emails. The board can only be reduced when no picked brick would fall outside the new size.
 
+## Delete Event Data After The Raffle
+
+Export any records you are required to retain before deleting event data. Close all board and admin tabs first, because an open Firebase-mode page recreates the game document when it sees that it is missing.
+
+Preview the exact Firebase project and Firestore document that will be deleted:
+
+```sh
+./scripts/purge-raffle-data.sh
+```
+
+When the preview is correct, delete only the raffle document at `games/{GAME_ID}`:
+
+```sh
+./scripts/purge-raffle-data.sh --execute
+```
+
+The script reads `projectId` and `GAME_ID` from `firebase-config.js`, requires you to type the Firebase project ID as confirmation, and uses the authenticated Firebase CLI. It does not delete the Firebase project, other Firestore game documents, Firebase Authentication users, or Cloud Storage objects. This app does not write to Authentication or Cloud Storage.
+
+Browser-local storage is separate for every site origin, browser profile, and device. Serve or deploy `cleanup-local-data.html` beside the app, open it from each origin used for the raffle, and click the guarded clear button. In particular, clear both the hosted site origin and `http://127.0.0.1:4173/cleanup-local-data.html` if the MacBook board launcher was used. `localhost` and `127.0.0.1` are different origins, so clear both if both were used. Repeat this for every browser profile and device that used offline mode or displayed a winner.
+
+The cleanup page removes only `localStorage`/`sessionStorage` keys with this app's `pickABrick` prefix and app-named caches. It deliberately leaves unrelated browser data on the same origin untouched.
+
 ## Export Entries
 
 Use `Export CSV` in `admin.html`. The CSV includes:

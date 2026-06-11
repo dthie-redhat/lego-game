@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clear Pick a Brick Local Data</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 720px; margin: 3rem auto; padding: 0 1rem; }
+    button { font: inherit; padding: .7rem 1rem; }
+    code { background: #eee; padding: .1rem .25rem; }
+    #result { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Clear Pick a Brick local data</h1>
+  <p>
+    This clears the raffle app's local data for this browser profile and the current origin only:
+    <code id="origin"></code>.
+  </p>
+  <p>It does not delete Firestore data or unrelated data belonging to other apps on this origin.</p>
+  <button id="clearButton" type="button">Clear this browser's raffle data</button>
+  <p id="result" role="status"></p>
+  <script>
+    const APP_KEY_PREFIX = "pickABrick";
+
+    document.getElementById("origin").textContent = location.origin;
+    document.getElementById("clearButton").addEventListener("click", async () => {
+      const confirmation = "CLEAR LOCAL RAFFLE DATA";
+      if (prompt(`Type exactly "${confirmation}" to continue:`) !== confirmation) {
+        document.getElementById("result").textContent = "Nothing was cleared.";
+        return;
+      }
+
+      const localKeys = Object.keys(localStorage).filter(key => key.startsWith(APP_KEY_PREFIX));
+      const sessionKeys = Object.keys(sessionStorage).filter(key => key.startsWith(APP_KEY_PREFIX));
+      localKeys.forEach(key => localStorage.removeItem(key));
+      sessionKeys.forEach(key => sessionStorage.removeItem(key));
+
+      let cacheCount = 0;
+      if ("caches" in window) {
+        const names = await caches.keys();
+        const appCaches = names.filter(name => name.startsWith("pick-a-brick-"));
+        await Promise.all(appCaches.map(name => caches.delete(name)));
+        cacheCount = appCaches.length;
+      }
+
+      document.getElementById("result").textContent =
+        `Cleared ${localKeys.length} localStorage key(s), ${sessionKeys.length} sessionStorage key(s), ` +
+        `and ${cacheCount} raffle cache(s) for ${location.origin}.\n` +
+        "Repeat this on every origin, browser profile, and device used during the raffle.";
+    });
+  </script>
+</body>
+</html>
